@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dyraf70rcmrrk" path="res://Scripts/World.cs" id="1_a02cp"]
 [ext_resource type="PackedScene" uid="uid://fu1amsumtj2d" path="res://Scenes/player.tscn" id="2_go701"]
+[ext_resource type="PackedScene" uid="uid://c4g73bjjcc7gr" path="res://Scenes/UI/pause_screen.tscn" id="3_5a7ea"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_a02cp"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -40,10 +41,8 @@ size = Vector3(2, 5, 5)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=2079608024]
 
-[node name="Label" type="Label" parent="UI" unique_id=196164369]
-offset_right = 214.0
-offset_bottom = 75.0
-text = "Code: "
+[node name="PauseScreen" parent="UI" unique_id=1191840184 instance=ExtResource("3_5a7ea")]
+visible = false
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=268784330]
 spawn_path = NodePath("..")

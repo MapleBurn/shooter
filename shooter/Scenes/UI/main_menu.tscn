@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bec6gmogw03rv"]
 
-[ext_resource type="Script" uid="uid://ckw2ucltanfrl" path="res://Scripts/MainMenu.cs" id="1_28flt"]
+[ext_resource type="Script" uid="uid://ckw2ucltanfrl" path="res://Scripts/UI/MainMenu.cs" id="1_5wsvm"]
 
 [node name="Main menu" type="Control" unique_id=166990343 node_paths=PackedStringArray("_hostButton", "_joinButton", "_codeInput", "_codeLabel")]
 layout_mode = 3
@@ -9,7 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_28flt")
+script = ExtResource("1_5wsvm")
 _hostButton = NodePath("VBoxContainer/btnHost")
 _joinButton = NodePath("VBoxContainer/btnJoin")
 _codeInput = NodePath("VBoxContainer/LineEdit")

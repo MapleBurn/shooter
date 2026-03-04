@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Shooter.Scripts;
+namespace Shooter.Scripts.UI;
 
 public partial class MainMenu : Control
 {
