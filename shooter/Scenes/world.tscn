@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://chneeuased4d3"]
+
+[ext_resource type="Script" uid="uid://dyraf70rcmrrk" path="res://Scripts/World.cs" id="1_a02cp"]
+[ext_resource type="PackedScene" uid="uid://fu1amsumtj2d" path="res://Scenes/player.tscn" id="2_go701"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_a02cp"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_go701"]
+sky_material = SubResource("ProceduralSkyMaterial_a02cp")
+
+[sub_resource type="Environment" id="Environment_5a7ea"]
+background_mode = 2
+sky = SubResource("Sky_go701")
+tonemap_mode = 2
+glow_enabled = true
+
+[node name="World" type="Node3D" unique_id=7436364 node_paths=PackedStringArray("_spawner")]
+script = ExtResource("1_a02cp")
+_playerScene = ExtResource("2_go701")
+_spawner = NodePath("MultiplayerSpawner")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=842651010]
+environment = SubResource("Environment_5a7ea")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=356354033]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1896884108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.986374, 0)
+use_collision = true
+size = Vector3(30, 1, 30)
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=1378621674]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2744627, -1.2814989, 2.0083618)
+use_collision = true
+size = Vector3(2, 5, 5)
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=2079608024]
+
+[node name="Label" type="Label" parent="UI" unique_id=196164369]
+offset_right = 214.0
+offset_bottom = 75.0
+text = "Code: "
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=268784330]
+spawn_path = NodePath("..")

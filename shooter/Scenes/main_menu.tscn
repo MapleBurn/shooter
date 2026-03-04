@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://bec6gmogw03rv"]
+
+[ext_resource type="Script" uid="uid://ckw2ucltanfrl" path="res://Scripts/MainMenu.cs" id="1_28flt"]
+
+[node name="Main menu" type="Control" unique_id=166990343 node_paths=PackedStringArray("_hostButton", "_joinButton", "_codeInput", "_codeLabel")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_28flt")
+_hostButton = NodePath("VBoxContainer/btnHost")
+_joinButton = NodePath("VBoxContainer/btnJoin")
+_codeInput = NodePath("VBoxContainer/LineEdit")
+_codeLabel = NodePath("VBoxContainer/Label")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=2136407979]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0.12156863, 0.36078432, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=470023892]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -276.5
+offset_top = -183.0
+offset_right = 276.5
+offset_bottom = 183.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="btnHost" type="Button" parent="VBoxContainer" unique_id=685523076]
+layout_mode = 2
+size_flags_vertical = 4
+text = "host game"
+
+[node name="Label" type="LineEdit" parent="VBoxContainer" unique_id=1636316337]
+layout_mode = 2
+text = "Your host code is: "
+editable = false
+
+[node name="btnJoin" type="Button" parent="VBoxContainer" unique_id=288542497]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Join game"
+
+[node name="LineEdit" type="LineEdit" parent="VBoxContainer" unique_id=1137451575]
+layout_mode = 2
+size_flags_vertical = 4
+placeholder_text = "Enter host code to join"
+
+[connection signal="pressed" from="VBoxContainer/btnHost" to="." method="BtnHostPressed"]
+[connection signal="pressed" from="VBoxContainer/btnJoin" to="." method="BtnJoinPressed"]
