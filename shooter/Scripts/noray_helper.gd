@@ -11,6 +11,10 @@ func _ready():
 	Noray.on_connect_nat.connect(handle_nat_connection)
 	Noray.on_connect_relay.connect(handle_relay_connection)
 	
+	# The "Unable to set TCP no delay option" warning on Windows is harmless.
+	# It happens because Noray's WebSocket tries to set TCP_NODELAY while the 
+	# socket is still in a "connecting" state. This is a known Godot issue on 
+	# Windows (godotengine/godot#95217) and does not affect functionality.
 	Noray.connect_to_host(NORAY_ADDRESS, NORAY_PORT)
 	
 	
