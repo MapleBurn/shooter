@@ -8,7 +8,7 @@ namespace Shooter.Scripts;
 /// 
 /// This node is created programmatically by Player._Ready() for the local player only.
 /// </summary>
-public partial class PlayerHUD : CanvasLayer
+public partial class PlayerHud : CanvasLayer
 {
     // Health bar
     private ProgressBar _healthBar;

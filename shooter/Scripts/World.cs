@@ -22,6 +22,7 @@ public partial class World : Node3D
         CollectSpawnPoints();
 
         _spawner.SpawnFunction = Callable.From<Variant, Node>(SpawnPlayerCallback);
+        _spawner.SpawnPath = "/root/World";
 
         if (Multiplayer.IsServer())
         {

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://fu1amsumtj2d"]
 
 [ext_resource type="Script" uid="uid://cvn6fiki1igpv" path="res://Scripts/Player.cs" id="1_v0iea"]
-[ext_resource type="Script" uid="uid://srv3dng3atke" path="res://Scripts/Weapon.cs" id="2_cvnsp"]
+[ext_resource type="Script" uid="uid://srv3dng3atke" path="res://Scripts/Gun/Weapon.cs" id="2_cvnsp"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
 radius = 0.4375

@@ -53,7 +53,7 @@ public partial class Player : CharacterBody3D
     private Node3D _weaponNode;
 
     // HUD & Overlays
-    private PlayerHUD _hud;
+    private PlayerHud _hud;
     private DamageOverlay _damageOverlay;
 
     // Aiming
@@ -76,10 +76,7 @@ public partial class Player : CharacterBody3D
     [Signal] public delegate void PlayerDiedEventHandler(string playerName);
     [Signal] public delegate void PlayerRespawnedEventHandler();
 
-    // ═══════════════════════════════════════════
-    //  LIFECYCLE
-    // ═══════════════════════════════════════════
-
+    #region Godot Lifecycle
     public override void _Ready()
     {
         _camera = GetNode<Camera3D>("Camera3D");
@@ -149,7 +146,7 @@ public partial class Player : CharacterBody3D
             // Camera: render layer 1 (world + weapon) but NOT layer 2 (own body)
             _camera.CullMask = 1; // Only layer 1
 
-            _hud = new PlayerHUD();
+            _hud = new PlayerHud();
             AddChild(_hud);
             _hud.UpdateHealth(Health, MaxHealth);
 
@@ -167,31 +164,8 @@ public partial class Player : CharacterBody3D
             SetupHitZones();
         }
     }
-
-    private void InitLimbHealth()
-    {
-        _limbHealth["head"] = HeadLimbHp;
-        _limbHealth["left_arm"] = ArmLimbHp;
-        _limbHealth["right_arm"] = ArmLimbHp;
-        _limbHealth["left_leg"] = LegLimbHp;
-        _limbHealth["right_leg"] = LegLimbHp;
-    }
-
-    private static string NodeNameToZone(string nodeName)
-    {
-        return nodeName switch
-        {
-            "Head" => "head",
-            "Torso" => "torso",
-            "LeftArm" => "left_arm",
-            "RightArm" => "right_arm",
-            "LeftLeg" => "left_leg",
-            "RightLeg" => "right_leg",
-            _ => nodeName.ToLower()
-        };
-    }
-
-    public override void _Input(InputEvent @event)
+    
+        public override void _Input(InputEvent @event)
     {
         if (!IsLocal || IsDead) return;
         if (IsGamePaused) return;
@@ -329,6 +303,30 @@ public partial class Player : CharacterBody3D
 
         Velocity = vel;
         MoveAndSlide();
+    }
+    #endregion
+
+    private void InitLimbHealth()
+    {
+        _limbHealth["head"] = HeadLimbHp;
+        _limbHealth["left_arm"] = ArmLimbHp;
+        _limbHealth["right_arm"] = ArmLimbHp;
+        _limbHealth["left_leg"] = LegLimbHp;
+        _limbHealth["right_leg"] = LegLimbHp;
+    }
+
+    private static string NodeNameToZone(string nodeName)
+    {
+        return nodeName switch
+        {
+            "Head" => "head",
+            "Torso" => "torso",
+            "LeftArm" => "left_arm",
+            "RightArm" => "right_arm",
+            "LeftLeg" => "left_leg",
+            "RightLeg" => "right_leg",
+            _ => nodeName.ToLower()
+        };
     }
 
     // ═══════════════════════════════════════════
@@ -508,6 +506,7 @@ public partial class Player : CharacterBody3D
     //  BODY PART MANAGEMENT
     // ═══════════════════════════════════════════
 
+    #region BodyPart Management
     private void ApplyDeathMaterial()
     {
         var deathMat = new StandardMaterial3D();
@@ -753,11 +752,13 @@ public partial class Player : CharacterBody3D
 
         AddChild(hitZone);
     }
+    #endregion
 
     // ═══════════════════════════════════════════
     //  VISUAL EFFECTS — Wound Decals
     // ═══════════════════════════════════════════
 
+    #region Visual Effects
     /// <summary>
     /// Places a red wound mark directly on the body part mesh that was hit.
     ///
@@ -884,18 +885,7 @@ public partial class Player : CharacterBody3D
         _bodyPartsRoot.AddChild(wound);
         wound.Transform = localTransform;
     }
-
-    /// <summary>
-    /// Returns the world-space center of a mesh's AABB, accounting for
-    /// the fact that GlobalPosition is the node origin, not the geometry center.
-    /// </summary>
-    private static Vector3 GetMeshWorldCenter(MeshInstance3D mesh)
-    {
-        Aabb aabb = mesh.GetAabb();
-        Vector3 localCenter = aabb.Position + aabb.Size * 0.5f;
-        return mesh.GlobalTransform * localCenter;
-    }
-
+    
     /// <summary>
     /// Generates a circular wound texture with bright red tones.
     /// White in the texture gets multiplied by AlbedoColor in the material,
@@ -946,6 +936,18 @@ public partial class Player : CharacterBody3D
 
         return ImageTexture.CreateFromImage(image);
     }
+    #endregion
+
+    /// <summary>
+    /// Returns the world-space center of a mesh's AABB, accounting for
+    /// the fact that GlobalPosition is the node origin, not the geometry center.
+    /// </summary>
+    private static Vector3 GetMeshWorldCenter(MeshInstance3D mesh)
+    {
+        Aabb aabb = mesh.GetAabb();
+        Vector3 localCenter = aabb.Position + aabb.Size * 0.5f;
+        return mesh.GlobalTransform * localCenter;
+    }
 
     // ═══════════════════════════════════════════
     //  PUBLIC HELPERS
@@ -961,5 +963,10 @@ public partial class Player : CharacterBody3D
     public MeshInstance3D GetBodyPart(string zone)
     {
         return _bodyParts.GetValueOrDefault(zone);
+    }
+
+    public void OnUpdateAmmo(int currentAmmo, int maxAmmo)
+    {
+        GameEvents.Instance.EmitSignal(GameEvents.SignalName.PlayerAmmoChanged, currentAmmo, maxAmmo);
     }
 }

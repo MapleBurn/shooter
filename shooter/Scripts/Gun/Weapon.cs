@@ -1,35 +1,32 @@
 using Godot;
 using System;
+using System.Threading.Tasks;
+using Shooter.Scripts.Gun;
 
-namespace Shooter.Scripts;
+namespace Shooter.Scripts.Gun;
 
-/// <summary>
-/// Weapon with ADS, raycasting, hit zones, muzzle flash, bullet trails, synced bullet holes.
-///
-/// v6.1 FIX: The CharacterBody3D collision shape (big capsule on layer 1) was blocking
-/// the raycast from ever reaching the HitZone Area3Ds (layer 2) inside it.
-///
-/// Solution: Exclude ALL player CharacterBody3D RIDs from the raycast, so the ray
-/// passes straight through player bodies and can only hit:
-///   - HitZone Area3Ds (layer 2) → zone-specific damage
-///   - World geometry (layer 1) → bullet holes
-///
-/// If the ray hits nothing (missed), no damage is applied.
-/// </summary>
 public partial class Weapon : Node3D
 {
-    [Export] public float Damage = 25.0f;
-    [Export] public float FireRate = 0.1f;
-    [Export] public float Range = 100.0f;
+    #region Properties
+    public float Damage = 25.0f;
+    public float FireRate = 0.1f;
+    public float Range = 100.0f;
 
-    [Export] public float HipSpread = 0.035f;
-    [Export] public float AdsSpread = 0.005f;
-    [Export] public float WeaponTiltAmount = 0.8f;
+    public float HipSpread = 0.035f;
+    public float AdsSpread = 0.005f;
+    public float WeaponTiltAmount = 0.8f;
 
-    [Export] public Vector3 AdsPositionOffset = new Vector3(-0.15f, 0.05f, -0.1f);
+    public Vector3 AdsPositionOffset = new Vector3(-0.15f, 0.05f, -0.1f);
 
-    [Export] public float TrailDuration = 0.12f;
-    [Export] public Color TrailColor = new Color(1.0f, 0.95f, 0.7f, 0.5f);
+    public float TrailDuration = 0.12f;
+    public Color TrailColor = new Color(1.0f, 0.95f, 0.7f, 0.5f);
+    #endregion
+
+    // --- NEW AMMO MECHANICS ---
+    [Export] public int MaxAmmo = 30;
+    private int _currentAmmo;
+    private bool _isReloading = false;
+    private float _reloadDuration = 4.0f;
 
     private Timer _fireRateTimer;
     private bool _canFire = true;
@@ -43,14 +40,12 @@ public partial class Weapon : Node3D
     private GpuParticles3D _muzzleParticles;
     private Node3D _muzzleTip;
 
-    // Shared bullet hole texture
     private static ImageTexture _bulletHoleTexture;
-
-    // Bullet hole pool
     private const int MaxBulletHoles = 15;
     private const float BulletHoleLifetime = 6.0f;
-    private static readonly System.Collections.Generic.Queue<Decal> _activeBulletHoles = new();
+    private static readonly System.Collections.Generic.Queue<Decal> ActiveBulletHoles = new();
 
+    #region Godot Lifecycle
     public override void _Ready()
     {
         _rng = new RandomNumberGenerator();
@@ -58,6 +53,9 @@ public partial class Weapon : Node3D
 
         _ownerPlayer = GetOwnerPlayer();
         _camera = _ownerPlayer?.GetCamera() ?? GetNode<Camera3D>("../Camera3D");
+
+        // Initialize Ammo
+        _currentAmmo = MaxAmmo;
 
         _fireRateTimer = new Timer();
         _fireRateTimer.WaitTime = FireRate;
@@ -84,7 +82,7 @@ public partial class Weapon : Node3D
         if (_bulletHoleTexture == null)
             _bulletHoleTexture = GenerateBulletHoleTexture();
     }
-
+    
     public override void _Process(double delta)
     {
         if (_camera == null || _ownerPlayer == null) return;
@@ -102,16 +100,38 @@ public partial class Weapon : Node3D
             : _originalGunPos;
         _gunMesh.Position = _gunMesh.Position.Lerp(targetPos, (float)delta * 12.0f);
 
-        if (Input.IsActionPressed("shoot") && _canFire)
+        // Handle Reload Input
+        if (Input.IsActionJustPressed("reload") && !_isReloading && _currentAmmo < MaxAmmo)
+        {
+            Reload();
+        }
+
+        // Handle Shooting
+        if (Input.IsActionPressed("shoot") && _canFire && !_isReloading && _currentAmmo > 0)
         {
             Fire();
         }
+        else if (Input.IsActionPressed("shoot") && _canFire && _currentAmmo <= 0 && !_isReloading)
+        {
+            // Auto-reload if empty and player is holding shoot? 
+            // Optional: Uncomment below to auto-reload when clicking while empty
+            // Reload();
+        }
     }
+    #endregion
 
     private void Fire()
     {
+        _currentAmmo--;
         _canFire = false;
         _fireRateTimer.Start();
+        _ownerPlayer.OnUpdateAmmo(_currentAmmo, MaxAmmo);
+
+        // If we ran out of ammo, trigger reload automatically
+        if (_currentAmmo <= 0 && !_isReloading)
+        {
+            Reload();
+        }
 
         bool isAiming = _ownerPlayer?.IsAiming ?? false;
         float spread = isAiming ? AdsSpread : HipSpread;
@@ -129,26 +149,17 @@ public partial class Weapon : Node3D
         Vector3 rayEnd = rayOrigin + rayDirection * Range;
 
         var spaceState = GetWorld3D().DirectSpaceState;
-
-        // ── Build exclude list ──
-        // Exclude ALL player CharacterBody3D RIDs so the ray passes through
-        // every player's outer collision capsule and can reach the HitZone Area3Ds inside.
-        // Also exclude own HitZones so we can't shoot ourselves.
         var excludeList = new Godot.Collections.Array<Rid>();
 
-        // Find all Player nodes in the scene and exclude their body RIDs
         foreach (var node in GetTree().GetNodesInGroup("_players_internal"))
         {
             if (node is Player p)
                 excludeList.Add(p.GetRid());
         }
 
-        // Fallback: if the group isn't populated yet, at least exclude own + find players manually
         if (excludeList.Count == 0)
         {
             excludeList.Add(_ownerPlayer.GetRid());
-
-            // Walk the world node to find other players
             var worldNode = _ownerPlayer.GetParent();
             if (worldNode != null)
             {
@@ -160,21 +171,16 @@ public partial class Weapon : Node3D
             }
         }
 
-        // Also exclude own HitZones
         foreach (var child in _ownerPlayer.GetChildren())
         {
             if (child is HitZone ownZone)
                 excludeList.Add(ownZone.GetRid());
         }
 
-        // ── SINGLE-PASS raycast: areas + bodies, layers 1+2 ──
-        // With all player bodies excluded, the ray can only hit:
-        //   - HitZone Area3Ds (layer 2) → zone damage
-        //   - World geometry bodies (layer 1) → bullet holes
         var query = PhysicsRayQueryParameters3D.Create(rayOrigin, rayEnd);
         query.CollideWithBodies = true;
         query.CollideWithAreas = true;
-        query.CollisionMask = 0b11; // Layers 1 and 2
+        query.CollisionMask = 0b11; 
         query.Exclude = excludeList;
 
         var result = spaceState.IntersectRay(query);
@@ -193,9 +199,7 @@ public partial class Weapon : Node3D
 
             if (collider is HitZone hitZone)
             {
-                // ── HitZone hit → zone-specific damage ──
                 var targetPlayer = hitZone.OwnerPlayer;
-                GD.Print($"[Weapon] Ray hit HitZone '{hitZone.ZoneName}' on {targetPlayer?.Name}");
                 if (targetPlayer != null && targetPlayer != _ownerPlayer)
                 {
                     int dmg = Mathf.RoundToInt(Damage);
@@ -208,8 +212,6 @@ public partial class Weapon : Node3D
             }
             else
             {
-                // Not a HitZone → must be world geometry → bullet hole
-                GD.Print($"[Weapon] Ray hit world geometry: {collider}");
                 createHole = true;
                 bulletHolePos = hitPoint;
                 bulletHoleNormal = hitNormal;
@@ -225,10 +227,24 @@ public partial class Weapon : Node3D
             createHole, bulletHolePos, bulletHoleNormal);
     }
 
-    // ═══════════════════════════════════════════
-    //  VISUAL EFFECTS
-    // ═══════════════════════════════════════════
+    private async Task Reload()
+    {
+        if (_isReloading || _currentAmmo == MaxAmmo) return;
 
+        _isReloading = true;
+        _ownerPlayer.OnUpdateAmmo(_currentAmmo, MaxAmmo);
+        GD.Print("[Weapon] Reloading...");
+
+        // You could trigger a reload animation here via Tween or AnimationPlayer
+        await ToSignal(GetTree().CreateTimer(_reloadDuration), "timeout");
+
+        _currentAmmo = MaxAmmo;
+        _isReloading = false;
+        _ownerPlayer.OnUpdateAmmo(_currentAmmo, MaxAmmo);
+        GD.Print("[Weapon] Reload Complete!");
+    }
+
+    #region Visual
     private void ShowMuzzleFlash()
     {
         _muzzleFlash.Visible = true;
@@ -263,7 +279,7 @@ public partial class Weapon : Node3D
         if (_ownerPlayer == null) return;
         foreach (var child in _ownerPlayer.GetChildren())
         {
-            if (child is PlayerHUD playerHud)
+            if (child is PlayerHud playerHud)
             {
                 playerHud.ShowHitConfirmation(zone == "head");
                 return;
@@ -277,9 +293,9 @@ public partial class Weapon : Node3D
 
     private void CreateBulletHole(Vector3 position, Vector3 normal)
     {
-        while (_activeBulletHoles.Count >= MaxBulletHoles)
+        while (ActiveBulletHoles.Count >= MaxBulletHoles)
         {
-            var oldest = _activeBulletHoles.Dequeue();
+            var oldest = ActiveBulletHoles.Dequeue();
             if (GodotObject.IsInstanceValid(oldest))
                 oldest.QueueFree();
         }
@@ -296,7 +312,7 @@ public partial class Weapon : Node3D
         decal.GlobalPosition = position;
         OrientDecalToNormal(decal, normal);
 
-        _activeBulletHoles.Enqueue(decal);
+        ActiveBulletHoles.Enqueue(decal);
         FadeAndRemoveDecal(decal);
     }
 
@@ -368,7 +384,7 @@ public partial class Weapon : Node3D
 
     private void SpawnBulletTrail(Vector3 from, Vector3 to)
     {
-        var trail = new BulletTrailNode();
+        var trail = new BulletTrail();
         GetTree().Root.AddChild(trail);
         trail.Setup(from, to, TrailColor, TrailDuration);
     }
@@ -404,6 +420,7 @@ public partial class Weapon : Node3D
 
         _muzzleTip.AddChild(_muzzleParticles);
     }
+    #endregion
 
     // ─────────────────────────────────────────
     //  NETWORK SYNC
@@ -429,72 +446,5 @@ public partial class Weapon : Node3D
             current = current.GetParent();
         }
         return null;
-    }
-}
-
-// ═══════════════════════════════════════════════════════
-//  BULLET TRAIL NODE
-// ═══════════════════════════════════════════════════════
-
-public partial class BulletTrailNode : MeshInstance3D
-{
-    private float _duration = 0.12f;
-    private float _elapsed = 0f;
-    private StandardMaterial3D _material;
-
-    public void Setup(Vector3 from, Vector3 to, Color color, float duration)
-    {
-        _duration = duration;
-
-        var immMesh = new ImmediateMesh();
-        _material = new StandardMaterial3D();
-        _material.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
-        _material.AlbedoColor = color;
-        _material.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
-        _material.NoDepthTest = false;
-        _material.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
-
-        Vector3 direction = (to - from);
-        if (direction.LengthSquared() < 0.001f)
-        {
-            QueueFree();
-            return;
-        }
-        direction = direction.Normalized();
-        float thickness = 0.008f;
-
-        Vector3 perp;
-        if (Mathf.Abs(direction.Dot(Vector3.Up)) > 0.99f)
-            perp = direction.Cross(Vector3.Right).Normalized() * thickness;
-        else
-            perp = direction.Cross(Vector3.Up).Normalized() * thickness;
-
-        immMesh.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, _material);
-        immMesh.SurfaceAddVertex(from + perp);
-        immMesh.SurfaceAddVertex(from - perp);
-        immMesh.SurfaceAddVertex(to + perp);
-        immMesh.SurfaceAddVertex(to - perp);
-        immMesh.SurfaceEnd();
-
-        Mesh = immMesh;
-        CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
-    }
-
-    public override void _Process(double delta)
-    {
-        _elapsed += (float)delta;
-
-        float alpha = 1.0f - (_elapsed / _duration);
-        if (alpha <= 0f)
-        {
-            QueueFree();
-            return;
-        }
-
-        if (_material != null)
-        {
-            var c = _material.AlbedoColor;
-            _material.AlbedoColor = new Color(c.R, c.G, c.B, alpha);
-        }
     }
 }
