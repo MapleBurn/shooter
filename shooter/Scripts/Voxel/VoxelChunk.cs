@@ -18,13 +18,16 @@ public partial class VoxelChunk : Node3D
 
         // 2. Set up the visual component
         _meshInstance = new MeshInstance3D();
+        var mat = new StandardMaterial3D();
+        mat.VertexColorUseAsAlbedo = true;
+        _meshInstance.MaterialOverride = mat;
         AddChild(_meshInstance);
 
         // 3. Set up the physics component (even if empty for now, we need the structure)
         _staticBody = new StaticBody3D();
         AddChild(_staticBody);
-        _staticBody.AddChild(_collisionShape);
-        _collisionShape = new CollisionShape3D(); // Placeholder
+        _collisionShape = new CollisionShape3D();
+        _staticBody.AddChild(_collisionShape); 
 
         // 4. Generate some initial terrain so we can see something!
         GenerateDummyTerrain();

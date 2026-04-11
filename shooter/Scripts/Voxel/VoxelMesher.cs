@@ -1,75 +1,71 @@
 using Godot;
+using System;
 using System.Collections.Generic;
-
-namespace Shooter.Scripts.Voxel;
+using Shooter.Scripts.Voxel;
 
 public static class VoxelMesher
 {
-    // Directions: Up, Down, Right, Left, Forward, Back
-    private static readonly Vector3I[] Directions = {
-        new(0, 1, 0), new(0, -1, 0), new(1, 0, 0), 
-        new(-1, 0, 0), new(0, 0, 1), new(0, 0, -1)
-    };
-
-    // The 4 vertex offsets for a quad on each face direction
-    private static readonly Vector3[] FaceOffsets = {
-        new(0, 1, 0), new(0, 1, 1), new(1, 1, 1), new(1, 1, 0), // Up (Y+)
-        new(0, 0, 1), new(0, 0, 0), new(1, 0, 0), new(1, 0, 1), // Down (Y-)
-        new(1, 0, 1), new(1, 1, 1), new(1, 1, 0), new(1, 0, 0), // Right (X+)
-        new(0, 0, 0), new(0, 1, 0), new(0, 1, 1), new(0, 0, 1), // Left (X-)
-        new(0, 0, 1), new(1, 0, 1), new(1, 1, 1), new(0, 1, 1), // Forward (Z+)
-        new(1, 0, 0), new(0, 0, 0), new(0, 1, 0), new(1, 1, 0)  // Back (Z-)
-    };
-
-    // The indices to form two triangles from the 4 vertices of a quad
-    private static readonly int[] FaceIndices = { 0, 1, 2, 0, 2, 3 };
-
-    public static ArrayMesh GenerateMesh(ChunkData chunk, VoxelRegistry registry)
+    // The 8 corners of a unit cube (centered at 0,0,0)
+    private static readonly Vector3[] _cubeVertices = new Vector3[]
     {
-        var vertices = new List<Vector3>();
-        var colors = new List<Color>();
-        var normals = new List<Vector3>();
-        var indices = new List<int>();
+        new(-0.5f, -0.5f,  0.5f), // 0: Front-Bottom-Left
+        new( 0.5f, -0.5f,  0.5f), // 1: Front-Bottom-Right
+        new( 0.5f, -0.5f, -0.5f), // 2: Back-Bottom-Right
+        new(-0.5f, -0.5f, -0.5f), // 3: Back-Bottom-Left
+        new(-0.5f,  0.5f,  0.5f), // 4: Front-Top-Left
+        new( 0.5f,  0.5f,  0.5f), // 5: Front-Top-Right
+        new( 0.5f,  0.5f, -0.5f), // 6: Back-Top-Right
+        new(-0.5f,  0.5f, -0.5f)  // 7: Back-Top-Left
+    };
 
-        for (int z = 0; z < ChunkData.Size; z++)
+    private enum Faces { Front, Back, Left, Right, Top, Bottom }
+
+    // Your working triangle definitions (indices of _cubeVertices)
+    private static readonly Dictionary<Faces, Vector3[]> _faceTriangles = new()
+    {
+        { Faces.Front,  new[] { new Vector3(0, 4, 5), new Vector3(0, 5, 1) } },
+        { Faces.Back,   new[] { new Vector3(2, 6, 7), new Vector3(2, 7, 3) } },
+        { Faces.Left,   new[] { new Vector3(3, 7, 4), new Vector3(3, 4, 0) } },
+        { Faces.Right,  new[] { new Vector3(1, 5, 6), new Vector3(1, 6, 2) } },
+        { Faces.Top,    new[] { new Vector3(4, 7, 6), new Vector3(4, 6, 5) } },
+        { Faces.Bottom, new[] { new Vector3(3, 0, 1), new Vector3(3, 1, 2) } }
+    };
+
+    private static readonly Dictionary<Faces, Vector3> _faceNormals = new()
+    {
+        { Faces.Front,  new Vector3(0, 0, 1) },
+        { Faces.Back,   new Vector3(0, 0, -1) },
+        { Faces.Left,   new Vector3(-1, 0, 0) },
+        { Faces.Right,  new Vector3(1, 0, 0) },
+        { Faces.Top,    new Vector3(0, 1, 0) },
+        { Faces.Bottom, new Vector3(0, -1, 0) }
+    };
+
+    public static ArrayMesh GenerateMesh(ChunkData data, VoxelRegistry registry)
+    {
+        List<Vector3> vertices = new();
+        List<Color> colors = new();
+        List<Vector3> normals = new();
+        List<int> indices = new();
+
+        for (int x = 0; x < ChunkData.Size; x++)
         {
             for (int y = 0; y < ChunkData.Size; y++)
             {
-                for (int x = 0; x < ChunkData.Size; x++)
+                for (int z = 0; z < ChunkData.Size; z++)
                 {
-                    byte voxelId = chunk.GetVoxel(x, y, z);
+                    byte voxelId = data.GetVoxel(x, y, z);
                     if (voxelId == 0) continue; // Skip air
 
+                    Vector3 pos = new Vector3(x, y, z);
                     VoxelMaterial mat = registry.GetMaterial(voxelId);
-                    if (mat == null) continue;
 
-                    // Check all 6 neighbors for face culling
-                    for (int i = 0; i < 6; i++)
+                    // Check each face to see if it's exposed
+                    foreach (Faces face in Enum.GetValues(typeof(Faces)))
                     {
-                        Vector3I neighborPos = new Vector3I(x, y, z) + Directions[i];
-                        
-                        // If neighbor is air or out of bounds, we draw this face
-                        if (chunk.GetVoxel(neighborPos.X, neighborPos.Y, neighborPos.Z) == 0)
+                        if (IsFaceExposed(face, x, y, z, data))
                         {
-                            int vertexStartIndex = vertices.Count;
-
-                            // Add the 4 vertices for this quad
-                            for (int v = 0; v < 4; v++)
-                            {
-                                // Calculate position: current voxel pos + offset from face template
-                                Vector3 vertPos = new Vector3(x, y, z) + FaceOffsets[i * 4 + v];
-                                vertices.Add(vertPos);
-                                colors.Add(mat.Color);
-                                
-                                // Normal is simply the direction of the face
-                                normals.Add(Directions[i]);
-                            }
-
-                            // Add indices for the two triangles forming the quad
-                            for (int j = 0; j < 6; j++)
-                            {
-                                indices.Add(vertexStartIndex + FaceIndices[j]);
-                            }
+                            AddFace(face, pos, mat.Color, vertices, colors, normals, indices);
                         }
                     }
                 }
@@ -79,9 +75,53 @@ public static class VoxelMesher
         return BuildArrayMesh(vertices, colors, normals, indices);
     }
 
+    private static bool IsFaceExposed(Faces face, int x, int y, int z, ChunkData data)
+    {
+        Vector3 normal = _faceNormals[face];
+        // Calculate neighbor position using integer math to avoid float errors
+        int nx = x + (int)normal.X;
+        int ny = y + (int)normal.Y;
+        int nz = z + (int)normal.Z;
+
+        // If neighbor is outside chunk bounds, it's exposed (air)
+        if (nx < 0 || nx >= ChunkData.Size || 
+            ny < 0 || ny >= ChunkData.Size || 
+            nz < 0 || nz >= ChunkData.Size)
+        {
+            return true;
+        }
+
+        // If neighbor is air, it's exposed
+        return data.GetVoxel(nx, ny, nz) == 0;
+    }
+
+    private static void AddFace(Faces face, Vector3 position, Color color, 
+        List<Vector3> vertices, List<Color> colors, List<Vector3> normals, List<int> indices)
+    {
+        var triangles = _faceTriangles[face];
+        Vector3 normal = _faceNormals[face];
+
+        foreach (var triangle in triangles)
+        {
+            // Each 'triangle' is a Vector3 containing 3 vertex indices from _cubeVertices
+            for (int i = 0; i < 3; i++)
+            {
+                int vertexIndex = (int)triangle[i];
+                
+                // Add the actual world position: Cube Corner + Block Position
+                vertices.Add(_cubeVertices[vertexIndex] + position);
+                colors.Add(color);
+                normals.Add(normal);
+                
+                // We add indices to the index list for the ArrayMesh
+                indices.Add(vertices.Count - 1);
+            }
+        }
+    }
+
     private static ArrayMesh BuildArrayMesh(List<Vector3> verts, List<Color> cols, List<Vector3> norms, List<int> idxs)
     {
-        var arrMesh = new ArrayMesh();
+        ArrayMesh arrMesh = new ArrayMesh();
         var arrays = new Godot.Collections.Array();
         arrays.Resize((int)Mesh.ArrayType.Max);
 

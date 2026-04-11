@@ -61,12 +61,11 @@ public partial class Player : CharacterBody3D
     private float _defaultFov = 75.0f;
     private float _adsFov = 45.0f;
     private float _currentFov;
-
-    // Death flop
-    private bool _deathFlopActive = false;
-    private float _deathFlopTimer = 0f;
-    private Vector3 _deathFlopDirection = Vector3.Zero;
-    private float _deathTiltAngle = 0f;
+    
+    // Creative mode
+    private float _creativeFlySpeed = 10.0f;
+    private bool _isCreativeMode = false;
+    private double _lastJumpTime = 0.0;
 
     // ──────────────── Wound decal texture (shared) ────────────────
     private static ImageTexture _woundTexture;
@@ -206,56 +205,16 @@ public partial class Player : CharacterBody3D
 
     public override void _PhysicsProcess(double delta)
     {
-        if (!IsMultiplayerAuthority()) return;
+        if (!IsMultiplayerAuthority())
+            return;
 
         if (IsDead)
         {
-            // Death flop animation (tilt body and slide)
-            if (_deathFlopActive)
-            {
-                _deathFlopTimer -= (float)delta;
-
-                // Tilt the body parts toward the ground
-                if (_bodyPartsRoot != null)
-                {
-                    _deathTiltAngle = Mathf.MoveToward(_deathTiltAngle, Mathf.DegToRad(90), (float)delta * 4.0f);
-                    _bodyPartsRoot.Rotation = new Vector3(_deathTiltAngle, 0, 0);
-                }
-
-                // ── FIX: Keep collision enabled, just apply gravity + push ──
-                // Previously collision was disabled which caused falling through floor.
-                Vector3 velocity = Velocity;
-                if (!IsOnFloor())
-                    velocity.Y -= Gravity * (float)delta;
-                else
-                    velocity.Y = 0;
-
-                velocity.X = Mathf.MoveToward(velocity.X, 0, 2.0f * (float)delta);
-                velocity.Z = Mathf.MoveToward(velocity.Z, 0, 2.0f * (float)delta);
-
-                Velocity = velocity;
-                MoveAndSlide();
-
-                if (_deathFlopTimer <= 0)
-                    _deathFlopActive = false;
-
-                // Check respawn after flop
                 _respawnTimer -= (float)delta;
                 if (_respawnTimer <= 0)
                 {
                     Respawn();
                     Rpc(MethodName.OnRespawn);
-                }
-            }
-            else
-            {
-                // Keep grounded even after flop ends
-                if (!IsOnFloor())
-                {
-                    Vector3 velocity = Velocity;
-                    velocity.Y -= Gravity * (float)delta;
-                    Velocity = velocity;
-                    MoveAndSlide();
                 }
 
                 _respawnTimer -= (float)delta;
@@ -264,48 +223,58 @@ public partial class Player : CharacterBody3D
                     Respawn();
                     Rpc(MethodName.OnRespawn);
                 }
-            }
-            return;
+        }
+        
+        Vector3 velocity = Velocity;
+        var speed = Input.IsActionPressed("sprint") ? Speed * 8f : Speed;
+        if (_isCreativeMode)
+        {
+            speed *= 2f;
+        }
+		
+        // Add the gravity.
+        if (!IsOnFloor() && !_isCreativeMode)
+        {
+            velocity += GetGravity() * (float)delta;
         }
 
-        Vector3 vel = Velocity;
-
-        if (!IsOnFloor())
-            vel.Y -= Gravity * (float)delta;
-
-        if (!IsGamePaused)
+        // Handle Jump.
+        if (Input.IsActionJustPressed("jump") && IsOnFloor() && !_isCreativeMode)
         {
-            if (Input.IsActionJustPressed("jump") && IsOnFloor())
-                vel.Y = JumpVelocity;
-
-            Vector2 inputDir = Input.GetVector("left", "right", "up", "down");
-            Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0, inputDir.Y)).Normalized();
-
-            float currentSpeed = IsAiming ? Speed * AdsSpeedMultiplier : Speed;
-
-            if (direction != Vector3.Zero)
-            {
-                vel.X = direction.X * currentSpeed;
-                vel.Z = direction.Z * currentSpeed;
-            }
-            else
-            {
-                vel.X = Mathf.MoveToward(Velocity.X, 0, currentSpeed);
-                vel.Z = Mathf.MoveToward(Velocity.Z, 0, currentSpeed);
-            }
+            velocity.Y = JumpVelocity;
+        }
+		
+        Vector2 inputDir = Input.GetVector("left", "right", "up", "down");
+        Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0, inputDir.Y)).Normalized();
+        if (direction != Vector3.Zero)
+        {
+            velocity.X = direction.X * speed;
+            velocity.Z = direction.Z * speed;
         }
         else
         {
-            // Paused: still apply gravity so player doesn't freeze in midair
-            vel.X = Mathf.MoveToward(vel.X, 0, Speed);
-            vel.Z = Mathf.MoveToward(vel.Z, 0, Speed);
+            velocity.X = Mathf.MoveToward(Velocity.X, 0, speed);
+            velocity.Z = Mathf.MoveToward(Velocity.Z, 0, speed);
         }
 
-        Velocity = vel;
+        if (Input.IsActionPressed("crouch"))
+        {
+            velocity.Y = -speed;
+        }
+        else if (Input.IsActionPressed("jump"))
+        {
+            velocity.Y = speed;
+        }
+        else if (_isCreativeMode)
+        {
+            velocity.Y = Mathf.MoveToward(Velocity.Y, 0, speed);;
+        }
+		
+        Velocity = velocity;
         MoveAndSlide();
     }
     #endregion
-
+    
     private void InitLimbHealth()
     {
         _limbHealth["head"] = HeadLimbHp;
@@ -413,14 +382,6 @@ public partial class Player : CharacterBody3D
             if (_hud != null)
                 _hud.ShowDeathScreen(RespawnDelay);
 
-            // ── FIX: Do NOT disable collision. Keep it so MoveAndSlide works. ──
-            // Previously: collision.Disabled = true → fell through floor
-
-            // Start death flop
-            _deathFlopActive = true;
-            _deathFlopTimer = 1.5f;
-            _deathTiltAngle = 0f;
-
             // Push body in direction of the shot
             Vector3 pushDir = (GlobalPosition - hitPos);
             if (pushDir.LengthSquared() > 0.001f)
@@ -446,13 +407,6 @@ public partial class Player : CharacterBody3D
     private void OnRespawn()
     {
         IsDead = false;
-        _deathFlopActive = false;
-        _deathTiltAngle = 0f;
-
-        // Reset body tilt
-        if (_bodyPartsRoot != null)
-            _bodyPartsRoot.Rotation = Vector3.Zero;
-
         RestoreAllBodyParts();
     }
 
@@ -460,11 +414,9 @@ public partial class Player : CharacterBody3D
     {
         IsDead = false;
         Health = MaxHealth;
-        _deathFlopActive = false;
-        _deathTiltAngle = 0f;
 
-        if (_bodyPartsRoot != null)
-            _bodyPartsRoot.Rotation = Vector3.Zero;
+        //if (_bodyPartsRoot != null)
+        //    _bodyPartsRoot.Rotation = Vector3.Zero;
 
         var world = GetParent();
         if (world != null)
