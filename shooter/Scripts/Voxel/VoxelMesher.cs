@@ -1,7 +1,8 @@
-using Godot;
 using System;
 using System.Collections.Generic;
-using Shooter.Scripts.Voxel;
+using Godot;
+
+namespace Shooter.Scripts.Voxel;
 
 public static class VoxelMesher
 {
@@ -63,7 +64,7 @@ public static class VoxelMesher
                     // Check each face to see if it's exposed
                     foreach (Faces face in Enum.GetValues(typeof(Faces)))
                     {
-                        if (IsFaceExposed(face, x, y, z, data))
+                        if (IsFaceExposed(face, x, y, z, data) && mat != null)
                         {
                             AddFace(face, pos, mat.Color, vertices, colors, normals, indices);
                         }

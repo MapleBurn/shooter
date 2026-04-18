@@ -21,9 +21,8 @@ public partial class Weapon : Node3D
     public float TrailDuration = 0.12f;
     public Color TrailColor = new Color(1.0f, 0.95f, 0.7f, 0.5f);
     #endregion
-
-    // --- NEW AMMO MECHANICS ---
-    [Export] public int MaxAmmo = 30;
+    
+    public int MaxAmmo = 30;
     private int _currentAmmo;
     private bool _isReloading = false;
     private float _reloadDuration = 4.0f;
@@ -51,8 +50,19 @@ public partial class Weapon : Node3D
         _rng = new RandomNumberGenerator();
         _rng.Randomize();
 
-        _ownerPlayer = GetOwnerPlayer();
-        _camera = _ownerPlayer?.GetCamera() ?? GetNode<Camera3D>("../Camera3D");
+        _ownerPlayer = GetParent<Player>();
+        if (_ownerPlayer == null)
+        {
+            GD.PrintErr("[Weapon] Couldn't get the player!");
+            return;
+        }
+
+        _camera = _ownerPlayer.Camera;
+        if (_camera == null)
+        {
+            GD.PrintErr("[Weapon] Could not find player's camera!");
+            return;
+        }
 
         // Initialize Ammo
         _currentAmmo = MaxAmmo;
@@ -85,7 +95,6 @@ public partial class Weapon : Node3D
     
     public override void _Process(double delta)
     {
-        if (_camera == null || _ownerPlayer == null) return;
         if (!_ownerPlayer.IsMultiplayerAuthority()) return;
         if (_ownerPlayer.IsDead) return;
         if (Player.IsGamePaused) return;
@@ -103,20 +112,12 @@ public partial class Weapon : Node3D
         // Handle Reload Input
         if (Input.IsActionJustPressed("reload") && !_isReloading && _currentAmmo < MaxAmmo)
         {
-            Reload();
+            ReloadAsync();
         }
 
         // Handle Shooting
         if (Input.IsActionPressed("shoot") && _canFire && !_isReloading && _currentAmmo > 0)
-        {
             Fire();
-        }
-        else if (Input.IsActionPressed("shoot") && _canFire && _currentAmmo <= 0 && !_isReloading)
-        {
-            // Auto-reload if empty and player is holding shoot? 
-            // Optional: Uncomment below to auto-reload when clicking while empty
-            // Reload();
-        }
     }
     #endregion
 
@@ -128,10 +129,10 @@ public partial class Weapon : Node3D
         _ownerPlayer.OnUpdateAmmo(_currentAmmo, MaxAmmo);
 
         // If we ran out of ammo, trigger reload automatically
-        if (_currentAmmo <= 0 && !_isReloading)
+        /*if (_currentAmmo <= 0 && !_isReloading)
         {
             Reload();
-        }
+        }*/
 
         bool isAiming = _ownerPlayer?.IsAiming ?? false;
         float spread = isAiming ? AdsSpread : HipSpread;
@@ -227,15 +228,16 @@ public partial class Weapon : Node3D
             createHole, bulletHolePos, bulletHoleNormal);
     }
 
-    private async Task Reload()
+    // could be done without async/await but this way it was cleaner
+    private async Task ReloadAsync()
     {
         if (_isReloading || _currentAmmo == MaxAmmo) return;
 
         _isReloading = true;
         _ownerPlayer.OnUpdateAmmo(_currentAmmo, MaxAmmo);
         GD.Print("[Weapon] Reloading...");
-
-        // You could trigger a reload animation here via Tween or AnimationPlayer
+        
+        // continues after the timer times out
         await ToSignal(GetTree().CreateTimer(_reloadDuration), "timeout");
 
         _currentAmmo = MaxAmmo;
@@ -435,16 +437,5 @@ public partial class Weapon : Node3D
 
         if (createHole)
             CreateBulletHole(holePos, holeNormal);
-    }
-
-    private Player GetOwnerPlayer()
-    {
-        Node current = GetParent();
-        while (current != null)
-        {
-            if (current is Player p) return p;
-            current = current.GetParent();
-        }
-        return null;
     }
 }

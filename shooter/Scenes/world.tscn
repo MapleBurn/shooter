@@ -4,8 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://fu1amsumtj2d" path="res://Scenes/player.tscn" id="2_go701"]
 [ext_resource type="PackedScene" uid="uid://c4g73bjjcc7gr" path="res://Scenes/UI/pause_screen.tscn" id="3_5a7ea"]
 [ext_resource type="PackedScene" uid="uid://bop5c32ueja05" path="res://Scenes/ui.tscn" id="4_8j60k"]
-[ext_resource type="Script" uid="uid://b3ngtjj0bushx" path="res://Scripts/Voxel/VoxelChunk.cs" id="5_fo5ed"]
-[ext_resource type="Resource" uid="uid://cdqocp47ugk4s" path="res://Resources/VoxelMaterials.tres" id="6_5ukr8"]
+[ext_resource type="Script" uid="uid://d4g6qu0ufplbl" path="res://Scripts/Voxel/VoxelEntity.cs" id="5_fo5ed"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_a02cp"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -72,6 +71,5 @@ visible = false
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=268784330]
 spawn_path = NodePath("..")
 
-[node name="TestChunk" type="Node3D" parent="." unique_id=1609990810]
+[node name="VoxelWorld" type="Node3D" parent="." unique_id=1320194182]
 script = ExtResource("5_fo5ed")
-Registry = ExtResource("6_5ukr8")

@@ -35,8 +35,9 @@ properties/1/path = NodePath(".:rotation")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 
-[node name="Player" type="CharacterBody3D" unique_id=1960074569]
+[node name="Player" type="CharacterBody3D" unique_id=1960074569 node_paths=PackedStringArray("Camera")]
 script = ExtResource("1_v0iea")
+Camera = NodePath("Camera3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1672635747]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06640625, 0)

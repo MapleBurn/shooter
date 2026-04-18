@@ -38,7 +38,7 @@ public partial class Player : CharacterBody3D
     public static bool IsGamePaused { get; set; } = false;
 
     // ──────────────── Node references ────────────────
-    private Camera3D _camera;
+    [Export] public Camera3D Camera;
     private float _cameraRotationX = 0.0f;
     private bool IsLocal => GetMultiplayerAuthority() == Multiplayer.GetUniqueId();
 
@@ -78,7 +78,6 @@ public partial class Player : CharacterBody3D
     #region Godot Lifecycle
     public override void _Ready()
     {
-        _camera = GetNode<Camera3D>("Camera3D");
         _weaponNode = GetNodeOrNull<Node3D>("Weapon");
 
         // Add to internal group so Weapon can find all players for raycast exclusion
@@ -128,8 +127,8 @@ public partial class Player : CharacterBody3D
 
         if (IsMultiplayerAuthority())
         {
-            _camera.Current = true;
-            _camera.Fov = _defaultFov;
+            Camera.Current = true;
+            Camera.Fov = _defaultFov;
             Input.MouseMode = Input.MouseModeEnum.Captured;
 
             // ── FIX: Hide body parts via Camera3D CullMask ──
@@ -143,7 +142,7 @@ public partial class Player : CharacterBody3D
             }
 
             // Camera: render layer 1 (world + weapon) but NOT layer 2 (own body)
-            _camera.CullMask = 1; // Only layer 1
+            Camera.CullMask = 1; // Only layer 1
 
             _hud = new PlayerHud();
             AddChild(_hud);
@@ -156,7 +155,7 @@ public partial class Player : CharacterBody3D
         }
         else
         {
-            _camera.Current = false;
+            Camera.Current = false;
             SetPhysicsProcess(false);
             SetProcessUnhandledInput(false);
 
@@ -184,7 +183,7 @@ public partial class Player : CharacterBody3D
                 Mathf.DegToRad(MaxLookAngle)
             );
 
-            _camera.Rotation = new Vector3(_cameraRotationX, 0, 0);
+            Camera.Rotation = new Vector3(_cameraRotationX, 0, 0);
         }
 
         if (@event.IsActionPressed("aim"))
@@ -200,7 +199,7 @@ public partial class Player : CharacterBody3D
 
         float targetFov = IsAiming ? _adsFov : _defaultFov;
         _currentFov = Mathf.Lerp(_currentFov, targetFov, (float)delta * 10.0f);
-        _camera.Fov = _currentFov;
+        Camera.Fov = _currentFov;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -391,8 +390,7 @@ public partial class Player : CharacterBody3D
             pushDir.Y = 0.3f;
             Velocity = pushDir * 3.0f;
         }
-
-        // Death material on ALL body parts
+        
         ApplyDeathMaterial();
 
         // Detach killing zone body part
@@ -414,9 +412,6 @@ public partial class Player : CharacterBody3D
     {
         IsDead = false;
         Health = MaxHealth;
-
-        //if (_bodyPartsRoot != null)
-        //    _bodyPartsRoot.Rotation = Vector3.Zero;
 
         var world = GetParent();
         if (world != null)
@@ -904,8 +899,6 @@ public partial class Player : CharacterBody3D
     // ═══════════════════════════════════════════
     //  PUBLIC HELPERS
     // ═══════════════════════════════════════════
-
-    public Camera3D GetCamera() => _camera;
 
     public void SetSpawnPosition(Vector3 pos)
     {

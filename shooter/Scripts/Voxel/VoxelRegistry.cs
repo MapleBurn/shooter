@@ -7,8 +7,8 @@ public partial class VoxelRegistry : Resource
 {
     // Maps an ID (byte) to a Material
     [Export] public Godot.Collections.Array<VoxelMaterial> Materials { get; set; } = new();
-
-    public VoxelMaterial GetMaterial(byte id)
+    
+    public VoxelMaterial? GetMaterial(byte id)
     {
         if (id == 0)
             return null; // 0 is Air
