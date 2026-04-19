@@ -26,10 +26,13 @@ public partial class Weapon : Node3D
     private int _currentAmmo;
     private bool _isReloading = false;
     private float _reloadDuration = 4.0f;
+    private float _bulletSpeed = 500.0f;
+    private float _bulletPenetration = 100.0f;
 
     private Timer _fireRateTimer;
     private bool _canFire = true;
-    private MeshInstance3D _gunMesh;
+    [Export] private MeshInstance3D _gunMesh;
+    [Export] private Marker3D _muzzle;
     private Vector3 _originalGunPos;
     private Camera3D _camera;
     private RandomNumberGenerator _rng;
@@ -37,12 +40,6 @@ public partial class Weapon : Node3D
 
     private OmniLight3D _muzzleFlash;
     private GpuParticles3D _muzzleParticles;
-    private Node3D _muzzleTip;
-
-    private static ImageTexture _bulletHoleTexture;
-    private const int MaxBulletHoles = 15;
-    private const float BulletHoleLifetime = 6.0f;
-    private static readonly System.Collections.Generic.Queue<Decal> ActiveBulletHoles = new();
 
     #region Godot Lifecycle
     public override void _Ready()
@@ -72,25 +69,17 @@ public partial class Weapon : Node3D
         _fireRateTimer.OneShot = true;
         _fireRateTimer.Timeout += () => _canFire = true;
         AddChild(_fireRateTimer);
-
-        _gunMesh = GetNode<MeshInstance3D>("MeshInstance3D");
+        
         _originalGunPos = _gunMesh.Position;
-
-        _muzzleTip = new Node3D();
-        _muzzleTip.Position = new Vector3(0, 0, -0.5f);
-        _gunMesh.AddChild(_muzzleTip);
 
         _muzzleFlash = new OmniLight3D();
         _muzzleFlash.LightColor = new Color(1.0f, 0.8f, 0.3f);
         _muzzleFlash.LightEnergy = 3.0f;
         _muzzleFlash.OmniRange = 3.0f;
         _muzzleFlash.Visible = false;
-        _muzzleTip.AddChild(_muzzleFlash);
+        _muzzle.AddChild(_muzzleFlash);
 
         CreateMuzzleParticles();
-
-        if (_bulletHoleTexture == null)
-            _bulletHoleTexture = GenerateBulletHoleTexture();
     }
     
     public override void _Process(double delta)
@@ -137,95 +126,19 @@ public partial class Weapon : Node3D
         bool isAiming = _ownerPlayer?.IsAiming ?? false;
         float spread = isAiming ? AdsSpread : HipSpread;
 
-        Vector3 rayOrigin = _camera.GlobalPosition;
-        Vector3 rayDirection = -_camera.GlobalTransform.Basis.Z;
-
         Vector3 spreadOffset = new Vector3(
             _rng.RandfRange(-spread, spread),
             _rng.RandfRange(-spread, spread),
             0
         );
-        rayDirection = (rayDirection + _camera.GlobalTransform.Basis * spreadOffset).Normalized();
-
-        Vector3 rayEnd = rayOrigin + rayDirection * Range;
-
-        var spaceState = GetWorld3D().DirectSpaceState;
-        var excludeList = new Godot.Collections.Array<Rid>();
-
-        foreach (var node in GetTree().GetNodesInGroup("_players_internal"))
-        {
-            if (node is Player p)
-                excludeList.Add(p.GetRid());
-        }
-
-        if (excludeList.Count == 0)
-        {
-            excludeList.Add(_ownerPlayer.GetRid());
-            var worldNode = _ownerPlayer.GetParent();
-            if (worldNode != null)
-            {
-                foreach (var child in worldNode.GetChildren())
-                {
-                    if (child is Player otherPlayer)
-                        excludeList.Add(otherPlayer.GetRid());
-                }
-            }
-        }
-
-        foreach (var child in _ownerPlayer.GetChildren())
-        {
-            if (child is HitZone ownZone)
-                excludeList.Add(ownZone.GetRid());
-        }
-
-        var query = PhysicsRayQueryParameters3D.Create(rayOrigin, rayEnd);
-        query.CollideWithBodies = true;
-        query.CollideWithAreas = true;
-        query.CollisionMask = 0b11; 
-        query.Exclude = excludeList;
-
-        var result = spaceState.IntersectRay(query);
-
-        Vector3 shotEndPoint = rayEnd;
-        bool createHole = false;
-        Vector3 bulletHolePos = Vector3.Zero;
-        Vector3 bulletHoleNormal = Vector3.Zero;
-
-        if (result.Count > 0)
-        {
-            var collider = result["collider"].AsGodotObject();
-            var hitPoint = result["position"].AsVector3();
-            var hitNormal = result["normal"].AsVector3();
-            shotEndPoint = hitPoint;
-
-            if (collider is HitZone hitZone)
-            {
-                var targetPlayer = hitZone.OwnerPlayer;
-                if (targetPlayer != null && targetPlayer != _ownerPlayer)
-                {
-                    int dmg = Mathf.RoundToInt(Damage);
-                    targetPlayer.Rpc(
-                        Player.MethodName.TakeDamage,
-                        dmg, hitZone.ZoneName, hitPoint, hitNormal
-                    );
-                    ShowHitmarker(hitZone.ZoneName);
-                }
-            }
-            else
-            {
-                createHole = true;
-                bulletHolePos = hitPoint;
-                bulletHoleNormal = hitNormal;
-            }
-        }
+        
+        var shootDir = (_camera.GlobalTransform.Basis * Vector3.Forward + spreadOffset).Normalized();
+        BulletManager.Instance.SpawnBullet(_muzzle.GlobalPosition, shootDir, _bulletSpeed, _bulletPenetration);
 
         ShowMuzzleFlash();
         RecoilAnimation();
 
-        Vector3 trailStart = _muzzleTip.GlobalPosition;
-
-        Rpc(MethodName.OnShotFired, trailStart, shotEndPoint,
-            createHole, bulletHolePos, bulletHoleNormal);
+        //Rpc(MethodName.OnShotFired);
     }
 
     // could be done without async/await but this way it was cleaner
@@ -290,97 +203,6 @@ public partial class Weapon : Node3D
     }
 
     // ─────────────────────────────────────────
-    //  BULLET HOLES
-    // ─────────────────────────────────────────
-
-    private void CreateBulletHole(Vector3 position, Vector3 normal)
-    {
-        while (ActiveBulletHoles.Count >= MaxBulletHoles)
-        {
-            var oldest = ActiveBulletHoles.Dequeue();
-            if (GodotObject.IsInstanceValid(oldest))
-                oldest.QueueFree();
-        }
-
-        var decal = new Decal();
-        decal.Size = new Vector3(0.12f, 0.05f, 0.12f);
-        decal.TextureAlbedo = _bulletHoleTexture;
-        decal.Modulate = new Color(0.05f, 0.05f, 0.05f, 0.9f);
-        decal.UpperFade = 0.2f;
-        decal.LowerFade = 0.5f;
-        decal.NormalFade = 0.3f;
-
-        GetTree().Root.AddChild(decal);
-        decal.GlobalPosition = position;
-        OrientDecalToNormal(decal, normal);
-
-        ActiveBulletHoles.Enqueue(decal);
-        FadeAndRemoveDecal(decal);
-    }
-
-    private async void FadeAndRemoveDecal(Decal decal)
-    {
-        await ToSignal(GetTree().CreateTimer(BulletHoleLifetime), "timeout");
-        if (!GodotObject.IsInstanceValid(decal)) return;
-
-        var tween = GetTree().CreateTween();
-        tween.TweenProperty(decal, "modulate:a", 0.0f, 1.5f);
-        tween.TweenCallback(Callable.From(() =>
-        {
-            if (GodotObject.IsInstanceValid(decal))
-                decal.QueueFree();
-        }));
-    }
-
-    private void OrientDecalToNormal(Decal decal, Vector3 normal)
-    {
-        normal = normal.Normalized();
-        Vector3 up = normal;
-        Vector3 right;
-
-        if (Mathf.Abs(normal.Dot(Vector3.Right)) < 0.99f)
-            right = normal.Cross(Vector3.Right).Normalized();
-        else
-            right = normal.Cross(Vector3.Forward).Normalized();
-
-        Vector3 forward = right.Cross(up).Normalized();
-        decal.GlobalTransform = new Transform3D(new Basis(right, up, forward), decal.GlobalPosition);
-    }
-
-    private static ImageTexture GenerateBulletHoleTexture()
-    {
-        int size = 32;
-        var image = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
-        float center = size / 2.0f;
-        float outerRadius = size / 2.0f;
-        float innerRadius = size / 6.0f;
-
-        for (int y = 0; y < size; y++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                float dx = x - center;
-                float dy = y - center;
-                float dist = Mathf.Sqrt(dx * dx + dy * dy);
-
-                if (dist > outerRadius)
-                    image.SetPixel(x, y, new Color(0, 0, 0, 0));
-                else if (dist < innerRadius)
-                    image.SetPixel(x, y, new Color(0.02f, 0.02f, 0.02f, 1.0f));
-                else
-                {
-                    float t = (dist - innerRadius) / (outerRadius - innerRadius);
-                    float alpha = 1.0f - t;
-                    float brightness = 0.05f + t * 0.15f;
-                    image.SetPixel(x, y, new Color(brightness, brightness, brightness, alpha * 0.8f));
-                }
-            }
-        }
-
-        return ImageTexture.CreateFromImage(image);
-    }
-
-    // ─────────────────────────────────────────
     //  BULLET TRAIL
     // ─────────────────────────────────────────
 
@@ -420,7 +242,7 @@ public partial class Weapon : Node3D
         drawMesh.Height = 0.02f;
         _muzzleParticles.DrawPass1 = drawMesh;
 
-        _muzzleTip.AddChild(_muzzleParticles);
+        _muzzle.AddChild(_muzzleParticles);
     }
     #endregion
 
@@ -429,13 +251,12 @@ public partial class Weapon : Node3D
     // ─────────────────────────────────────────
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
-    private void OnShotFired(Vector3 trailStart, Vector3 trailEnd,
-        bool createHole, Vector3 holePos, Vector3 holeNormal)
+    private void OnShotFired()
     {
         ShowMuzzleFlash();
-        SpawnBulletTrail(trailStart, trailEnd);
+        //SpawnBulletTrail(trailStart, trailEnd);
 
-        if (createHole)
-            CreateBulletHole(holePos, holeNormal);
+        //if (createHole)
+            //CreateBulletHole(holePos, holeNormal);
     }
 }

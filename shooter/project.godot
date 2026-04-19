@@ -21,6 +21,7 @@ Noray="*uid://gu4bv4tgms3x"
 PacketHandshake="*uid://tt3j25a05n7c"
 MultiplayerManager="*uid://bcolsxr8vtypi"
 GameEvents="*uid://3jm2xb7x7gcs"
+BulletManager="*uid://vij4tfgpspk6"
 
 [dotnet]
 

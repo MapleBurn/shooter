@@ -14,7 +14,7 @@ public partial class VoxelChunk : Node3D
     public override void _Ready()
     {
         // 1. Initialize the Data (In a real game, this might be loaded from disk)
-        ChunkData = new ChunkData(Registry);
+        ChunkData = new ChunkData();
 
         // 2. Set up the visual component
         _meshInstance = new MeshInstance3D();
@@ -55,6 +55,44 @@ public partial class VoxelChunk : Node3D
     public void SetVoxel(int x, int y, int z, byte id)
     {
         ChunkData.SetVoxel(x, y, z, id);
+        UpdateMesh();
+    }
+    
+    public void DamageVoxel(Vector3 worldHitPos, Vector3 worldRayDir, float penetration)  
+    {  
+        const float epsilon = 0.01f;   
+        
+        Vector3 localHit = ToLocal(worldHitPos);  
+        Vector3 localRayDir = (GlobalTransform.Basis.Inverse() * worldRayDir).Normalized();  
+        Vector3 samplePos = localHit + localRayDir * epsilon;  
+        
+        Vector3I pos = new Vector3I(  
+            Mathf.RoundToInt(samplePos.X),  
+            Mathf.RoundToInt(samplePos.Y),  
+            Mathf.RoundToInt(samplePos.Z)  
+        );  
+        if (!ChunkData.IsInBounds(pos.X, pos.Y, pos.Z))  
+            return;  
+  
+        byte currentId = ChunkData.GetVoxel(pos.X, pos.Y, pos.Z);
+        if (currentId == 0)
+        {
+            GD.PrintErr($"[VoxelChunk] Hit an empty voxel at {pos}, samplePos={samplePos}");
+            return;
+        }
+
+        var mat = Registry.GetMaterial(currentId);
+
+        if (mat != null && penetration > mat.Toughness)
+        {
+            SetVoxel(pos.X, pos.Y, pos.Z, 0);
+        }
+        else
+        {
+            var meshMat = (StandardMaterial3D)_meshInstance.MaterialOverride;
+            meshMat.AlbedoColor = new Color(1.0f, 0.5f, 0.5f);
+        }
+
         UpdateMesh();
     }
 }

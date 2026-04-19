@@ -16,12 +16,13 @@ public partial class VoxelEntity : Node3D
     {
         Registry = GD.Load<VoxelRegistry>("res://Resources/VoxelMaterials.tres");
         GenerateDummyTerrain();
+        //GenerateBrick();
     }
     
     /// <summary>
     /// A helper to create a simple floor so the scene isn't empty.
     /// </summary>
-    public void GenerateDummyTerrain()
+    private void GenerateDummyTerrain()
     {
         for (int cx = 0; cx < GridSize; cx++)
         {
@@ -64,5 +65,28 @@ public partial class VoxelEntity : Node3D
         {
             chunk.UpdateMesh();
         }
+    }
+
+    private void GenerateBrick()
+    {
+        var chunkCoord = new Vector3I(0, 0, 0);
+        var chunk = new VoxelChunk();
+        chunk.Registry = Registry;
+        chunk.Position = chunkCoord;
+        _chunks[chunkCoord] = chunk;
+        AddChild(chunk);
+        
+        for (int x = 0; x < ChunkData.Size; x++)
+        {
+            for (int z = 0; z < ChunkData.Size; z++)
+            {
+                for (int y = 1; y < ChunkData.Size; y++)
+                {
+                    chunk.ChunkData.SetVoxel(x, y, z, 1);
+                }
+            }
+        }
+        
+        chunk.UpdateMesh();
     }
 }

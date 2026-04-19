@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://fu1amsumtj2d"]
 
 [ext_resource type="Script" uid="uid://cvn6fiki1igpv" path="res://Scripts/Player.cs" id="1_v0iea"]
-[ext_resource type="Script" uid="uid://srv3dng3atke" path="res://Scripts/Gun/Weapon.cs" id="2_cvnsp"]
+[ext_resource type="PackedScene" uid="uid://dawtokisfwnkh" path="res://Scenes/weapon.tscn" id="2_cvnsp"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
 radius = 0.4375
@@ -23,9 +23,6 @@ height = 0.7
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_fkybt"]
 radius = 0.1
 height = 0.4
-
-[sub_resource type="BoxMesh" id="BoxMesh_cvnsp"]
-size = Vector3(0.2, 0.2, 0.5)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_cvnsp"]
 properties/0/path = NodePath(".:position")
@@ -71,12 +68,7 @@ mesh = SubResource("CapsuleMesh_fkybt")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1904028, -0.7268238, 0)
 mesh = SubResource("CapsuleMesh_fkybt")
 
-[node name="Weapon" type="Node3D" parent="." unique_id=1097964701]
-script = ExtResource("2_cvnsp")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Weapon" unique_id=2061575556]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3682648, 0.12774274, -0.5814887)
-mesh = SubResource("BoxMesh_cvnsp")
+[node name="Weapon" parent="." unique_id=331073238 instance=ExtResource("2_cvnsp")]
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=293301970]
 replication_config = SubResource("SceneReplicationConfig_cvnsp")
