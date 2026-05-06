@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using Shooter.Scripts.PlayerLogic;
 
 namespace Shooter.Scripts.UI;
 
@@ -13,7 +14,7 @@ public partial class PauseScreen : Control
     {
         // Start hidden
         Visible = false;
-        Player.IsGamePaused = false;
+        OperatorPlayer.IsGamePaused = false;
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -29,21 +30,21 @@ public partial class PauseScreen : Control
     private void TogglePause()
     {
         Visible = !Visible;
-        Player.IsGamePaused = Visible;
+        OperatorPlayer.IsGamePaused = Visible;
         Input.MouseMode = Visible ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Captured;
     }
 
     public void BtnResumePressed()
     {
         Visible = false;
-        Player.IsGamePaused = false;
+        OperatorPlayer.IsGamePaused = false;
         Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
     public void BtnLeavePressed()
     {
         // Unpause first
-        Player.IsGamePaused = false;
+        OperatorPlayer.IsGamePaused = false;
 
         // Disconnect from multiplayer cleanly
         if (Multiplayer.MultiplayerPeer != null)
@@ -84,6 +85,6 @@ public partial class PauseScreen : Control
     public override void _ExitTree()
     {
         // Make sure we clean up the pause state when this node is removed
-        Player.IsGamePaused = false;
+        OperatorPlayer.IsGamePaused = false;
     }
 }

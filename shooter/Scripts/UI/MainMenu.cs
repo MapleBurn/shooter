@@ -11,6 +11,7 @@ public partial class MainMenu : Control
 
     private Node _mp;
     private const string WorldScenePath = "res://Scenes/world.tscn";
+    private const string EditorScenePath = "res://Scenes/Editor/editor.tscn";
 
     public override void _Ready()
     {
@@ -33,7 +34,7 @@ public partial class MainMenu : Control
         string existingOid = (string)noray.Get("oid");
         if (!string.IsNullOrEmpty(existingOid))
         {
-            _codeLabel.Text = $"Kód: {existingOid}";
+            _codeLabel.Text = existingOid;
             _codeLabel.Visible = true;
         }
 
@@ -48,7 +49,7 @@ public partial class MainMenu : Control
     {
         var noray = GetNode<Node>("/root/Noray");
         string oid = (string)noray.Get("oid");
-        _codeLabel.Text = $"Kód: {oid}";
+        _codeLabel.Text = oid;
         _codeLabel.Visible = true;
     }
 
@@ -69,8 +70,13 @@ public partial class MainMenu : Control
         _hostButton.Disabled = true;
         _codeInput.Editable = false;
 
-        _codeLabel.Text = "Připojování...";
+        _codeLabel.Text = "Joining session...";
         _codeLabel.Visible = true;
+    }
+
+    private void BtnEditorPressed()
+    {
+        GetTree().ChangeSceneToFile(EditorScenePath);
     }
 
     private void OnConnectedToServer()

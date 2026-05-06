@@ -44,6 +44,12 @@ layout_mode = 2
 size_flags_vertical = 4
 text = "host game"
 
+[node name="btnEditor" type="Button" parent="VBoxContainer" unique_id=1150537719]
+layout_mode = 2
+size_flags_vertical = 4
+text = "map editor
+"
+
 [node name="Label" type="LineEdit" parent="VBoxContainer" unique_id=1636316337]
 layout_mode = 2
 text = "Your host code is: "
@@ -60,4 +66,5 @@ size_flags_vertical = 4
 placeholder_text = "Enter host code to join"
 
 [connection signal="pressed" from="VBoxContainer/btnHost" to="." method="BtnHostPressed"]
+[connection signal="pressed" from="VBoxContainer/btnEditor" to="." method="BtnEditorPressed"]
 [connection signal="pressed" from="VBoxContainer/btnJoin" to="." method="BtnJoinPressed"]

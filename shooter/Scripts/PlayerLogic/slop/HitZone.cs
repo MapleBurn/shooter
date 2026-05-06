@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Shooter.Scripts;
+namespace Shooter.Scripts.PlayerLogic.slop;
 
 /// <summary>
 /// An Area3D that represents a hittable body part on a player.

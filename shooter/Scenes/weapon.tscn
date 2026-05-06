@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://dawtokisfwnkh"]
+
+[ext_resource type="Script" uid="uid://srv3dng3atke" path="res://Scripts/Gun/Weapon.cs" id="1_er6cq"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_cvnsp"]
+size = Vector3(0.2, 0.2, 0.5)
+
+[node name="Weapon" type="Node3D" unique_id=331073238 node_paths=PackedStringArray("_gunMesh", "_muzzle")]
+script = ExtResource("1_er6cq")
+_gunMesh = NodePath("MeshInstance3D")
+_muzzle = NodePath("Marker3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1812473210]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3682648, 0.12774274, -0.5814887)
+mesh = SubResource("BoxMesh_cvnsp")
+
+[node name="Marker3D" type="Marker3D" parent="." unique_id=270869721]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.36143106, 0.11133185, -0.8399558)

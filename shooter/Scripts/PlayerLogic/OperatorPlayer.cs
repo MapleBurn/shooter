@@ -1,10 +1,10 @@
+﻿using System.Collections.Generic;
 using Godot;
-using System;
-using System.Collections.Generic;
+using Shooter.Scripts.PlayerLogic.slop;
 
-namespace Shooter.Scripts;
+namespace Shooter.Scripts.PlayerLogic;
 
-public partial class Player : CharacterBody3D
+public partial class OperatorPlayer : Player
 {
     // ──────────────── Movement ────────────────
     public const float Speed = 5.0f;
@@ -15,8 +15,6 @@ public partial class Player : CharacterBody3D
     public float AdsSensitivityMultiplier = 0.5f;
     public float MinLookAngle = -90.0f;
     public float MaxLookAngle = 90.0f;
-
-    public float Gravity = ProjectSettings.GetSetting("physics/3d/default_gravity").AsSingle();
 
     // ──────────────── Health & Combat ────────────────
     [Export] public int MaxHealth = 100;
@@ -38,7 +36,7 @@ public partial class Player : CharacterBody3D
     public static bool IsGamePaused { get; set; } = false;
 
     // ──────────────── Node references ────────────────
-    private Camera3D _camera;
+    [Export] public Camera3D Camera;
     private float _cameraRotationX = 0.0f;
     private bool IsLocal => GetMultiplayerAuthority() == Multiplayer.GetUniqueId();
 
@@ -64,8 +62,7 @@ public partial class Player : CharacterBody3D
     
     // Creative mode
     private float _creativeFlySpeed = 10.0f;
-    private bool _isCreativeMode = false;
-    private double _lastJumpTime = 0.0;
+    private double _lastJumpTime;
 
     // ──────────────── Wound decal texture (shared) ────────────────
     private static ImageTexture _woundTexture;
@@ -78,7 +75,6 @@ public partial class Player : CharacterBody3D
     #region Godot Lifecycle
     public override void _Ready()
     {
-        _camera = GetNode<Camera3D>("Camera3D");
         _weaponNode = GetNodeOrNull<Node3D>("Weapon");
 
         // Add to internal group so Weapon can find all players for raycast exclusion
@@ -128,8 +124,8 @@ public partial class Player : CharacterBody3D
 
         if (IsMultiplayerAuthority())
         {
-            _camera.Current = true;
-            _camera.Fov = _defaultFov;
+            Camera.Current = true;
+            Camera.Fov = _defaultFov;
             Input.MouseMode = Input.MouseModeEnum.Captured;
 
             // ── FIX: Hide body parts via Camera3D CullMask ──
@@ -143,7 +139,7 @@ public partial class Player : CharacterBody3D
             }
 
             // Camera: render layer 1 (world + weapon) but NOT layer 2 (own body)
-            _camera.CullMask = 1; // Only layer 1
+            Camera.CullMask = 1; // Only layer 1
 
             _hud = new PlayerHud();
             AddChild(_hud);
@@ -156,7 +152,7 @@ public partial class Player : CharacterBody3D
         }
         else
         {
-            _camera.Current = false;
+            Camera.Current = false;
             SetPhysicsProcess(false);
             SetProcessUnhandledInput(false);
 
@@ -184,7 +180,7 @@ public partial class Player : CharacterBody3D
                 Mathf.DegToRad(MaxLookAngle)
             );
 
-            _camera.Rotation = new Vector3(_cameraRotationX, 0, 0);
+            Camera.Rotation = new Vector3(_cameraRotationX, 0, 0);
         }
 
         if (@event.IsActionPressed("aim"))
@@ -200,7 +196,7 @@ public partial class Player : CharacterBody3D
 
         float targetFov = IsAiming ? _adsFov : _defaultFov;
         _currentFov = Mathf.Lerp(_currentFov, targetFov, (float)delta * 10.0f);
-        _camera.Fov = _currentFov;
+        Camera.Fov = _currentFov;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -224,54 +220,10 @@ public partial class Player : CharacterBody3D
                     Rpc(MethodName.OnRespawn);
                 }
         }
-        
-        Vector3 velocity = Velocity;
-        var speed = Input.IsActionPressed("sprint") ? Speed * 8f : Speed;
-        if (_isCreativeMode)
-        {
-            speed *= 2f;
-        }
-		
-        // Add the gravity.
-        if (!IsOnFloor() && !_isCreativeMode)
-        {
-            velocity += GetGravity() * (float)delta;
-        }
-
-        // Handle Jump.
-        if (Input.IsActionJustPressed("jump") && IsOnFloor() && !_isCreativeMode)
-        {
-            velocity.Y = JumpVelocity;
-        }
-		
-        Vector2 inputDir = Input.GetVector("left", "right", "up", "down");
-        Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0, inputDir.Y)).Normalized();
-        if (direction != Vector3.Zero)
-        {
-            velocity.X = direction.X * speed;
-            velocity.Z = direction.Z * speed;
-        }
         else
         {
-            velocity.X = Mathf.MoveToward(Velocity.X, 0, speed);
-            velocity.Z = Mathf.MoveToward(Velocity.Z, 0, speed);
+            Move((float)delta);
         }
-
-        if (Input.IsActionPressed("crouch"))
-        {
-            velocity.Y = -speed;
-        }
-        else if (Input.IsActionPressed("jump"))
-        {
-            velocity.Y = speed;
-        }
-        else if (_isCreativeMode)
-        {
-            velocity.Y = Mathf.MoveToward(Velocity.Y, 0, speed);;
-        }
-		
-        Velocity = velocity;
-        MoveAndSlide();
     }
     #endregion
     
@@ -391,8 +343,7 @@ public partial class Player : CharacterBody3D
             pushDir.Y = 0.3f;
             Velocity = pushDir * 3.0f;
         }
-
-        // Death material on ALL body parts
+        
         ApplyDeathMaterial();
 
         // Detach killing zone body part
@@ -414,9 +365,6 @@ public partial class Player : CharacterBody3D
     {
         IsDead = false;
         Health = MaxHealth;
-
-        //if (_bodyPartsRoot != null)
-        //    _bodyPartsRoot.Rotation = Vector3.Zero;
 
         var world = GetParent();
         if (world != null)
@@ -904,8 +852,6 @@ public partial class Player : CharacterBody3D
     // ═══════════════════════════════════════════
     //  PUBLIC HELPERS
     // ═══════════════════════════════════════════
-
-    public Camera3D GetCamera() => _camera;
 
     public void SetSpawnPosition(Vector3 pos)
     {
