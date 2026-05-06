@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using Shooter.Scripts.PlayerLogic;
 
 namespace Shooter.Scripts;
 
@@ -62,7 +63,7 @@ public partial class World : Node3D
         }
 
         // Reset pause state
-        Player.IsGamePaused = false;
+        OperatorPlayer.IsGamePaused = false;
         Input.MouseMode = Input.MouseModeEnum.Visible;
 
         // Return to main menu
@@ -121,7 +122,7 @@ public partial class World : Node3D
         Vector3 spawnPos = GetNextSpawnPoint();
         player.Position = spawnPos;
 
-        if (player is Player p)
+        if (player is OperatorPlayer p)
             p.SetSpawnPosition(spawnPos);
 
         return player;

@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://b43kggso16h8o"]
+
+[ext_resource type="Script" uid="uid://cr00pi7kjnooy" path="res://Scripts/Editor/EditorPlayer.cs" id="1_ktfa4"]
+[ext_resource type="Script" uid="uid://b8uywro1r7jb6" path="res://Scripts/PlayerLogic/PlayerMovement.cs" id="2_2drx2"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_2drx2"]
+
+[node name="EditorPlayer" type="CharacterBody3D" unique_id=1649158988 node_paths=PackedStringArray("_movement")]
+motion_mode = 1
+script = ExtResource("1_ktfa4")
+_movement = NodePath("Components/MovementComponent")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=458320473]
+shape = SubResource("SphereShape3D_2drx2")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=26235542]
+
+[node name="Components" type="Node" parent="." unique_id=1507896534]
+
+[node name="MovementComponent" type="Node" parent="Components" unique_id=524008224]
+script = ExtResource("2_2drx2")

@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Threading.Tasks;
 using Shooter.Scripts.Gun;
+using Shooter.Scripts.PlayerLogic;
 
 namespace Shooter.Scripts.Gun;
 
@@ -36,7 +37,7 @@ public partial class Weapon : Node3D
     private Vector3 _originalGunPos;
     private Camera3D _camera;
     private RandomNumberGenerator _rng;
-    private Player _ownerPlayer;
+    private OperatorPlayer _ownerPlayer;
 
     private OmniLight3D _muzzleFlash;
     private GpuParticles3D _muzzleParticles;
@@ -47,7 +48,7 @@ public partial class Weapon : Node3D
         _rng = new RandomNumberGenerator();
         _rng.Randomize();
 
-        _ownerPlayer = GetParent<Player>();
+        _ownerPlayer = GetParent<OperatorPlayer>();
         if (_ownerPlayer == null)
         {
             GD.PrintErr("[Weapon] Couldn't get the player!");
@@ -86,7 +87,7 @@ public partial class Weapon : Node3D
     {
         if (!_ownerPlayer.IsMultiplayerAuthority()) return;
         if (_ownerPlayer.IsDead) return;
-        if (Player.IsGamePaused) return;
+        if (OperatorPlayer.IsGamePaused) return;
 
         bool isAiming = _ownerPlayer.IsAiming;
 

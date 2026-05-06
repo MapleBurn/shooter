@@ -1,22 +1,16 @@
+﻿using System.Collections.Generic;
 using Godot;
-using System;
-using System.Collections.Generic;
+using Shooter.Scripts.PlayerLogic.slop;
 
-namespace Shooter.Scripts;
+namespace Shooter.Scripts.PlayerLogic;
 
-public partial class Player : CharacterBody3D
+public partial class OperatorPlayer : Player
 {
-    // ──────────────── Movement ────────────────
-    public const float Speed = 5.0f;
-    public const float AdsSpeedMultiplier = 0.4f;
-    public const float JumpVelocity = 4.5f;
-
+    
     public float MouseSensitivity = 0.003f;
     public float AdsSensitivityMultiplier = 0.5f;
     public float MinLookAngle = -90.0f;
     public float MaxLookAngle = 90.0f;
-
-    public float Gravity = ProjectSettings.GetSetting("physics/3d/default_gravity").AsSingle();
 
     // ──────────────── Health & Combat ────────────────
     [Export] public int MaxHealth = 100;
@@ -64,8 +58,7 @@ public partial class Player : CharacterBody3D
     
     // Creative mode
     private float _creativeFlySpeed = 10.0f;
-    private bool _isCreativeMode = false;
-    private double _lastJumpTime = 0.0;
+    private double _lastJumpTime;
 
     // ──────────────── Wound decal texture (shared) ────────────────
     private static ImageTexture _woundTexture;
@@ -223,54 +216,10 @@ public partial class Player : CharacterBody3D
                     Rpc(MethodName.OnRespawn);
                 }
         }
-        
-        Vector3 velocity = Velocity;
-        var speed = Input.IsActionPressed("sprint") ? Speed * 8f : Speed;
-        if (_isCreativeMode)
-        {
-            speed *= 2f;
-        }
-		
-        // Add the gravity.
-        if (!IsOnFloor() && !_isCreativeMode)
-        {
-            velocity += GetGravity() * (float)delta;
-        }
-
-        // Handle Jump.
-        if (Input.IsActionJustPressed("jump") && IsOnFloor() && !_isCreativeMode)
-        {
-            velocity.Y = JumpVelocity;
-        }
-		
-        Vector2 inputDir = Input.GetVector("left", "right", "up", "down");
-        Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0, inputDir.Y)).Normalized();
-        if (direction != Vector3.Zero)
-        {
-            velocity.X = direction.X * speed;
-            velocity.Z = direction.Z * speed;
-        }
         else
         {
-            velocity.X = Mathf.MoveToward(Velocity.X, 0, speed);
-            velocity.Z = Mathf.MoveToward(Velocity.Z, 0, speed);
+            Move((float)delta);
         }
-
-        if (Input.IsActionPressed("crouch"))
-        {
-            velocity.Y = -speed;
-        }
-        else if (Input.IsActionPressed("jump"))
-        {
-            velocity.Y = speed;
-        }
-        else if (_isCreativeMode)
-        {
-            velocity.Y = Mathf.MoveToward(Velocity.Y, 0, speed);;
-        }
-		
-        Velocity = velocity;
-        MoveAndSlide();
     }
     #endregion
     

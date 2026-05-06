@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://fu1amsumtj2d"]
 
-[ext_resource type="Script" uid="uid://cvn6fiki1igpv" path="res://Scripts/Player.cs" id="1_v0iea"]
+[ext_resource type="Script" uid="uid://cvn6fiki1igpv" path="res://Scripts/PlayerLogic/Player.cs" id="1_v0iea"]
 [ext_resource type="PackedScene" uid="uid://dawtokisfwnkh" path="res://Scenes/weapon.tscn" id="2_cvnsp"]
+[ext_resource type="Script" uid="uid://b8uywro1r7jb6" path="res://Scripts/PlayerLogic/PlayerMovement.cs" id="3_6t5aa"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
 radius = 0.4375
@@ -32,8 +33,10 @@ properties/1/path = NodePath(".:rotation")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 
-[node name="Player" type="CharacterBody3D" unique_id=1960074569 node_paths=PackedStringArray("Camera")]
+[node name="Player" type="CharacterBody3D" unique_id=1960074569 node_paths=PackedStringArray("_movementComponent", "Camera")]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
 script = ExtResource("1_v0iea")
+_movementComponent = NodePath("Components/MovementComponent")
 Camera = NodePath("Camera3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1672635747]
@@ -72,3 +75,8 @@ mesh = SubResource("CapsuleMesh_fkybt")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=293301970]
 replication_config = SubResource("SceneReplicationConfig_cvnsp")
+
+[node name="Components" type="Node" parent="." unique_id=1461567126]
+
+[node name="MovementComponent" type="Node" parent="Components" unique_id=201065804]
+script = ExtResource("3_6t5aa")

@@ -58,15 +58,18 @@ public static class VoxelMesher
                     byte voxelId = data.GetVoxel(x, y, z);
                     if (voxelId == 0) continue; // Skip air
 
-                    Vector3 pos = new Vector3(x, y, z);
-                    VoxelMaterial mat = registry.GetMaterial(voxelId);
+                    var pos = new Vector3(x, y, z);
+
+                    // Get the base material color or use the custom voxel color
+                    Color voxelColor = data.GetVoxelColor(x, y, z);
+                    Color finalColor = voxelColor != Colors.Transparent ? voxelColor : registry.GetMaterial(voxelId)?.Color ?? Colors.White;
 
                     // Check each face to see if it's exposed
                     foreach (Faces face in Enum.GetValues(typeof(Faces)))
                     {
-                        if (IsFaceExposed(face, x, y, z, data) && mat != null)
+                        if (IsFaceExposed(face, x, y, z, data))
                         {
-                            AddFace(face, pos, mat.Color, vertices, colors, normals, indices);
+                            AddFace(face, pos, finalColor, vertices, colors, normals, indices);
                         }
                     }
                 }

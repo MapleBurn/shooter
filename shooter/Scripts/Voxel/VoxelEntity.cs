@@ -15,8 +15,8 @@ public partial class VoxelEntity : Node3D
     public override void _Ready()
     {
         Registry = GD.Load<VoxelRegistry>("res://Resources/VoxelMaterials.tres");
-        GenerateDummyTerrain();
-        //GenerateBrick();
+        //GenerateDummyTerrain();
+        GenerateBrick();
     }
     
     /// <summary>
