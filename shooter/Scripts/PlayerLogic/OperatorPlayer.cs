@@ -7,14 +7,7 @@ namespace Shooter.Scripts.PlayerLogic;
 public partial class OperatorPlayer : Player
 {
     // ──────────────── Movement ────────────────
-    public const float Speed = 5.0f;
-    public const float AdsSpeedMultiplier = 0.4f;
-    public const float JumpVelocity = 4.5f;
-
-    public float MouseSensitivity = 0.003f;
     public float AdsSensitivityMultiplier = 0.5f;
-    public float MinLookAngle = -90.0f;
-    public float MaxLookAngle = 90.0f;
 
     // ──────────────── Health & Combat ────────────────
     [Export] public int MaxHealth = 100;
@@ -33,11 +26,8 @@ public partial class OperatorPlayer : Player
     private const int LegLimbHp = 35;
 
     // ──────────────── Pause state (shared) ────────────────
-    public static bool IsGamePaused { get; set; } = false;
 
     // ──────────────── Node references ────────────────
-    [Export] public Camera3D Camera;
-    private float _cameraRotationX = 0.0f;
     private bool IsLocal => GetMultiplayerAuthority() == Multiplayer.GetUniqueId();
 
     // Body parts (multi-mesh structure)
@@ -168,20 +158,7 @@ public partial class OperatorPlayer : Player
         float sensitivity = IsAiming
             ? MouseSensitivity * AdsSensitivityMultiplier
             : MouseSensitivity;
-
-        if (@event is InputEventMouseMotion mouseMotion)
-        {
-            RotateY(-mouseMotion.Relative.X * sensitivity);
-
-            _cameraRotationX -= mouseMotion.Relative.Y * sensitivity;
-            _cameraRotationX = Mathf.Clamp(
-                _cameraRotationX,
-                Mathf.DegToRad(MinLookAngle),
-                Mathf.DegToRad(MaxLookAngle)
-            );
-
-            Camera.Rotation = new Vector3(_cameraRotationX, 0, 0);
-        }
+        Look(@event, sensitivity);
 
         if (@event.IsActionPressed("aim"))
             IsAiming = true;

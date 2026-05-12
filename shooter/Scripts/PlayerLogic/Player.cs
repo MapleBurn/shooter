@@ -12,6 +12,16 @@ public partial class Player : CharacterBody3D
     protected float JumpVelocity = 4.5f;
     protected bool IsCreativeMode = false;
     
+    // ──────────────── Camera ────────────────
+    [Export] public Camera3D Camera;
+    private float _cameraRotationX = 0f;
+    private const float MinLookAngle = -90.0f;
+    private const float MaxLookAngle = 90.0f;
+    protected float MouseSensitivity = 0.003f;
+    
+    // ──────────────── Misc ────────────────
+    public static bool IsGamePaused { get; set; } = false;
+
     protected virtual void Move(float delta)
     {
         Vector3 velocity = Velocity;
@@ -61,5 +71,22 @@ public partial class Player : CharacterBody3D
 		
         Velocity = velocity;
         MoveAndSlide();
+    }
+
+    protected virtual void Look(InputEvent @event, float sensitivity)
+    {
+        if (@event is InputEventMouseMotion mouseMotion)
+        {
+            RotateY(-mouseMotion.Relative.X * sensitivity);
+
+            _cameraRotationX -= mouseMotion.Relative.Y * sensitivity;
+            _cameraRotationX = Mathf.Clamp(
+                _cameraRotationX,
+                Mathf.DegToRad(MinLookAngle),
+                Mathf.DegToRad(MaxLookAngle)
+            );
+
+            Camera.Rotation = new Vector3(_cameraRotationX, 0, 0);
+        }
     }
 }
