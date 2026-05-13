@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace Shooter.Scripts.Voxel;
@@ -5,6 +6,7 @@ namespace Shooter.Scripts.Voxel;
 public partial class VoxelChunk : Node3D
 {
     public VoxelRegistry Registry { get; set; }
+    public Vector3I ChunkCoord { get; set; }
     
     public ChunkData ChunkData;
     private MeshInstance3D _meshInstance;
@@ -12,6 +14,7 @@ public partial class VoxelChunk : Node3D
     private CollisionShape3D _collisionShape;
 
     private bool _isDirty;
+    public Action<VoxelChunk> OnBecameEmpty;
 
     public void Initialize(VoxelRegistry registry, Material mat)
     {
@@ -50,6 +53,13 @@ public partial class VoxelChunk : Node3D
 
         // Generate the new mesh using our Mesher
         ArrayMesh newMesh = VoxelMesher.GenerateMesh(ChunkData, Registry);
+        
+        if (newMesh == null)
+        {
+            GD.PrintErr("[VoxelChunk] Failed to generate mesh. I'd prefer this would not happen.");
+            return;
+        }
+
         _meshInstance.Mesh = newMesh;
         
         _collisionShape.Shape = new ConcavePolygonShape3D();
@@ -64,6 +74,12 @@ public partial class VoxelChunk : Node3D
     public void SetVoxel(int x, int y, int z, byte id)
     {
         ChunkData.SetVoxel(x, y, z, id);
+        
+        if (ChunkData.IsEmpty())
+        {
+            OnBecameEmpty?.Invoke(this);
+            return;
+        }
         _isDirty = true;
     }
     

@@ -125,6 +125,8 @@ public static class VoxelMesher
 
     private static ArrayMesh BuildArrayMesh(List<Vector3> verts, List<Color> cols, List<Vector3> norms, List<int> idxs)
     {
+        if (verts.Count == 0) return null;
+
         ArrayMesh arrMesh = new ArrayMesh();
         var arrays = new Godot.Collections.Array();
         arrays.Resize((int)Mesh.ArrayType.Max);

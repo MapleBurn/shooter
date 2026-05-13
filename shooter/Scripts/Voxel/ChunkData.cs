@@ -49,6 +49,15 @@ public class ChunkData
         return _voxelColors[GetIndex(x, y, z)];
     }
 
+    public bool IsEmpty()
+    {
+        foreach (var voxel in _voxels)
+        {
+            if (voxel != 0) return false;
+        }
+        return true;
+    }
+
     public bool IsInBounds(int x, int y, int z)
     {
         return x >= 0 && x < Size && y >= 0 && y < Size && z >= 0 && z < Size;

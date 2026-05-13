@@ -80,12 +80,23 @@ public partial class VoxelEntity : Node3D
 
         var chunk = new VoxelChunk();
         chunk.Initialize(Registry, _voxelMaterial);
+        chunk.ChunkCoord = coord;
         var size = ChunkData.Size * ChunkData.VoxelSize;
-        chunk.Position = coord * new Vector3(size, size, size);
+        chunk.Position = (Vector3)coord * size;
         
+        chunk.OnBecameEmpty = HandleEmptyChunk;
         AddChild(chunk);
         _chunks[coord] = chunk;
         return chunk;
+    }
+
+    /// <summary>
+    ///  Removes the chunks that Invoke being empty.
+    /// </summary>
+    private void HandleEmptyChunk(VoxelChunk chunk)
+    {
+        _chunks.Remove(chunk.ChunkCoord);
+        chunk.QueueFree();
     }
 
     public void SetVoxel(Vector3I globalPos, byte id)
