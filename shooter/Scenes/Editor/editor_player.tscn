@@ -12,10 +12,12 @@ albedo_color = Color(0.24705882, 0.65882355, 1, 0.23137255)
 
 [sub_resource type="BoxMesh" id="BoxMesh_vlew0"]
 material = SubResource("StandardMaterial3D_2drx2")
+size = Vector3(0.2, 0.2, 0.2)
 
-[node name="EditorPlayer" type="CharacterBody3D" unique_id=1649158988 node_paths=PackedStringArray("Camera")]
+[node name="EditorPlayer" type="CharacterBody3D" unique_id=1649158988 node_paths=PackedStringArray("GhostCursor", "Camera")]
 motion_mode = 1
 script = ExtResource("1_ktfa4")
+GhostCursor = NodePath("GhostCursor")
 Camera = NodePath("Camera3D")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=458320473]
@@ -31,7 +33,6 @@ visible = false
 [node name="GhostCursor" type="Node3D" parent="." unique_id=192403773 node_paths=PackedStringArray("PlayerCamera")]
 script = ExtResource("3_vlew0")
 PlayerCamera = NodePath("../Camera3D")
-RayLength = null
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="GhostCursor" unique_id=923914323]
 mesh = SubResource("BoxMesh_vlew0")

@@ -27,7 +27,8 @@ environment = SubResource("Environment_ub1o7")
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="EditorPlayer" parent="." unique_id=1649158988 instance=ExtResource("2_3ysjy")]
+[node name="EditorPlayer" parent="." unique_id=1649158988 node_paths=PackedStringArray("VoxelWorld") instance=ExtResource("2_3ysjy")]
+VoxelWorld = NodePath("../Map")
 
 [node name="Map" type="Node3D" parent="." unique_id=1926615472]
 script = ExtResource("3_3ysjy")

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -8,73 +9,52 @@ public partial class VoxelEntity : Node3D
     public const int GridSize = 8; // Number of chunks along one axis
 
     public VoxelRegistry Registry { get; set; }
-    //private bool _isStatic = true;
-
     private Dictionary<Vector3I, VoxelChunk> _chunks = new();
+    private StandardMaterial3D _voxelMaterial;
 
     public override void _Ready()
     {
+        _voxelMaterial = new StandardMaterial3D();
+        _voxelMaterial.VertexColorUseAsAlbedo = true;
         Registry = GD.Load<VoxelRegistry>("res://Resources/VoxelMaterials.tres");
         //GenerateDummyTerrain();
         GenerateBrick();
     }
     
-    /// <summary>
-    /// A helper to create a simple floor so the scene isn't empty.
-    /// </summary>
     private void GenerateDummyTerrain()
     {
         for (int cx = 0; cx < GridSize; cx++)
         {
             for (int cz = 0; cz < GridSize; cz++)
             {
-                var chunkCoord = new Vector3I(cx, cz, 0);
-
-                // Create and register the chunk
-                VoxelChunk chunk = new VoxelChunk();
-                chunk.Registry = Registry;
-                AddChild(chunk);
-                chunk.Position = new Vector3(
-                    cx * ChunkData.Size,
-                    0,
-                    cz * ChunkData.Size
-                );
-                _chunks[chunkCoord] = chunk;
+                var chunkCoord = new Vector3I(cx, 0, cz);
+                VoxelChunk chunk = CreateChunk(chunkCoord);
 
                 // Fill terrain
                 for (int x = 0; x < ChunkData.Size; x++)
                 {
                     for (int z = 0; z < ChunkData.Size; z++)
                     {
-                        chunk.ChunkData.SetVoxel(x, 0, z, 1);
+                        chunk.SetVoxel(x, 0, z, 1);
 
                         if (GD.Randf() > 0.9f)
                         {
                             for (int y = 1; y < 4; y++)
                             {
-                                chunk.ChunkData.SetVoxel(x, y, z, 1);
+                                chunk.SetVoxel(x, y, z, 1);
                             }
                         }
                     }
+                    chunk.UpdateMesh();
                 }
             }
-        }
-
-        // After modifying the data, we need to update the meshes
-        foreach (var chunk in _chunks.Values)
-        {
-            chunk.UpdateMesh();
         }
     }
 
     private void GenerateBrick()
     {
         var chunkCoord = new Vector3I(0, 0, 0);
-        var chunk = new VoxelChunk();
-        chunk.Registry = Registry;
-        chunk.Position = chunkCoord;
-        _chunks[chunkCoord] = chunk;
-        AddChild(chunk);
+        VoxelChunk chunk = CreateChunk(chunkCoord);
         
         for (int x = 0; x < ChunkData.Size; x++)
         {
@@ -82,11 +62,48 @@ public partial class VoxelEntity : Node3D
             {
                 for (int y = 1; y < ChunkData.Size; y++)
                 {
-                    chunk.ChunkData.SetVoxel(x, y, z, 1);
+                    chunk.SetVoxel(x, y, z, 1);
                 }
             }
         }
+        chunk.UpdateMesh();
+    }
+
+    /// <summary>
+    /// Tries to retrieve a chunk at the given chunk coordinate.
+    /// If the chunk doesn't exist, new one is created.
+    /// </summary>
+    private VoxelChunk CreateChunk(Vector3I coord)
+    {
+        if (_chunks.TryGetValue(coord, out VoxelChunk existingChunk))
+            return existingChunk;
+
+        var chunk = new VoxelChunk();
+        chunk.Initialize(Registry, _voxelMaterial);
+        var size = ChunkData.Size * ChunkData.VoxelSize;
+        chunk.Position = coord * new Vector3(size, size, size);
         
+        AddChild(chunk);
+        _chunks[coord] = chunk;
+        return chunk;
+    }
+
+    public void SetVoxel(Vector3I globalPos, byte id)
+    {
+        Vector3I chunkCoord = new Vector3I(
+            Mathf.FloorToInt((float)globalPos.X / ChunkData.Size),
+            Mathf.FloorToInt((float)globalPos.Y / ChunkData.Size),
+            Mathf.FloorToInt((float)globalPos.Z / ChunkData.Size)
+        );
+
+        VoxelChunk chunk = CreateChunk(chunkCoord);
+
+        Vector3I localPos = new Vector3I(
+            globalPos.X - (chunkCoord.X * ChunkData.Size),
+            globalPos.Y - (chunkCoord.Y * ChunkData.Size),
+            globalPos.Z - (chunkCoord.Z * ChunkData.Size)
+        );
+        chunk.SetVoxel(localPos.X, localPos.Y, localPos.Z, id);
         chunk.UpdateMesh();
     }
 }

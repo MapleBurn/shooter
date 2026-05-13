@@ -8,7 +8,7 @@ namespace Shooter.Scripts.PlayerLogic;
 public partial class Player : CharacterBody3D
 {
     // ──────────────── Movement ────────────────
-    protected float Speed = 5.0f;
+    protected float Speed = 4.0f;
     protected float JumpVelocity = 4.5f;
     protected bool IsCreativeMode = false;
     

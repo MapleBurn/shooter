@@ -112,8 +112,8 @@ public static class VoxelMesher
             {
                 int vertexIndex = (int)triangle[i];
                 
-                // Add the actual world position: Cube Corner + Block Position
-                vertices.Add(_cubeVertices[vertexIndex] + position);
+                // Add the actual world position: (Cube Corner + Block Position) * VoxelSize
+                vertices.Add((_cubeVertices[vertexIndex] + position) * ChunkData.VoxelSize);
                 colors.Add(color);
                 normals.Add(normal);
                 

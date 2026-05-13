@@ -1,4 +1,6 @@
+using System;
 using Godot;
+using Shooter.Scripts.Voxel;
 
 namespace Shooter.Scripts.Editor;
 
@@ -21,6 +23,11 @@ public partial class GhostCursor : Node3D
         _ghostMesh = GetNode<MeshInstance3D>("MeshInstance3D");
     }
 
+    public override void _Input(InputEvent @event)
+    {
+
+    }
+
     public override void _Process(double delta)
     {
         UpdateGhostPosition();
@@ -40,20 +47,22 @@ public partial class GhostCursor : Node3D
             Vector3 hitPoint = (Vector3)result["position"];
             Vector3 hitNormal = (Vector3)result["normal"];
 
-            // Offset slightly to ensure we are "inside" the target voxel
-            Vector3 targetWorldPos = (CurrentMode == EditMode.Place) 
-                ? hitPoint + (hitNormal * 0.1f) 
-                : hitPoint - (hitNormal * 0.1f);
+            // moves the coordinates inside the correct voxel based on the hit face normal.
+            if (CurrentMode == EditMode.Place)
+                hitPoint += hitNormal * 0.1f * ChunkData.VoxelSize;
+            else
+                hitPoint -= hitNormal * 0.1f * ChunkData.VoxelSize;
 
             // SNAP TO GRID: This creates the global coordinate
             CurrentGlobalVoxelPos = new Vector3I(
-                Mathf.FloorToInt(targetWorldPos.X),
-                Mathf.FloorToInt(targetWorldPos.Y),
-                Mathf.FloorToInt(targetWorldPos.Z)
+                Mathf.RoundToInt(hitPoint.X / ChunkData.VoxelSize),
+                Mathf.RoundToInt(hitPoint.Y / ChunkData.VoxelSize),
+                Mathf.RoundToInt(hitPoint.Z / ChunkData.VoxelSize)
             );
 
-            // Position the visual mesh (Global Pos + 0.5 to center it in the voxel)
-            GlobalPosition = new Vector3(CurrentGlobalVoxelPos.X, CurrentGlobalVoxelPos.Y, CurrentGlobalVoxelPos.Z) + new Vector3(0.5f, 0.5f, 0.5f);
+            // Position the visual mesh (Global Pos)
+            GlobalPosition = new Vector3(CurrentGlobalVoxelPos.X, CurrentGlobalVoxelPos.Y, CurrentGlobalVoxelPos.Z) * ChunkData.VoxelSize;
+            GlobalRotation = Vector3.Zero;
             _ghostMesh.Visible = true;
         }
         else

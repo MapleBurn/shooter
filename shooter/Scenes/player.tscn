@@ -33,7 +33,6 @@ properties/1/spawn = true
 properties/1/replication_mode = 1
 
 [node name="Player" type="CharacterBody3D" unique_id=1960074569 node_paths=PackedStringArray("Camera")]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
 script = ExtResource("1_6t5aa")
 Camera = NodePath("Camera3D")
 

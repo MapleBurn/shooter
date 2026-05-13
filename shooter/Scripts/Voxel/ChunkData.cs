@@ -5,15 +5,15 @@ namespace Shooter.Scripts.Voxel;
 
 public class ChunkData
 {
-    public const int Size = 16; // 16x16x16 is a good starting point for prototype
+    public const int Size = 16;
+    public const float VoxelSize = 0.2f; // Size of each voxels in meters
     public const int TotalVoxels = Size * Size * Size;
 
     private readonly byte[] _voxels = new byte[TotalVoxels];
-    private readonly Color[] _voxelColors = new Color[TotalVoxels]; // Add this line
+    private readonly Color[] _voxelColors = new Color[TotalVoxels];
 
     public VoxelRegistry Registry { get; set; }
     
-    // Converts 3D coordinates to a 1D index
     private int GetIndex(int x, int y, int z)
     {
         return x + (y * Size) + (z * Size * Size);
@@ -34,8 +34,7 @@ public class ChunkData
         if (!IsInBounds(x, y, z)) return 0; // Return air if out of bounds
         return _voxels[GetIndex(x, y, z)];
     }
-
-    // Add these methods for color handling
+    
     public void SetVoxelColor(int x, int y, int z, Color color)
     {
         if (IsInBounds(x, y, z))
@@ -46,7 +45,7 @@ public class ChunkData
 
     public Color GetVoxelColor(int x, int y, int z)
     {
-        if (!IsInBounds(x, y, z)) return Colors.Transparent; // Return transparent if out of bounds
+        if (!IsInBounds(x, y, z)) return Colors.Transparent;
         return _voxelColors[GetIndex(x, y, z)];
     }
 
