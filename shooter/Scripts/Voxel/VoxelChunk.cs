@@ -71,9 +71,11 @@ public partial class VoxelChunk : Node3D
     /// <summary>
     /// Public method to modify voxels from outside (e.g., a player tool).
     /// </summary>
-    public void SetVoxel(int x, int y, int z, byte id)
+    public void SetVoxel(int x, int y, int z, byte id, Color color = default)
     {
         ChunkData.SetVoxel(x, y, z, id);
+        if (color != default)
+            ChunkData.SetVoxelColor(x, y, z, color);
         
         if (ChunkData.IsEmpty())
         {

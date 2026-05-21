@@ -18,7 +18,8 @@ public partial class VoxelEntity : Node3D
         _voxelMaterial.VertexColorUseAsAlbedo = true;
         Registry = GD.Load<VoxelRegistry>("res://Resources/VoxelMaterials.tres");
         //GenerateDummyTerrain();
-        GenerateBrick();
+        //GenerateBrick();
+        SpawnCube();
     }
     
     private void GenerateDummyTerrain()
@@ -69,6 +70,14 @@ public partial class VoxelEntity : Node3D
         chunk.UpdateMesh();
     }
 
+    private void SpawnCube()
+    {
+        var chunkCoord = new Vector3I(0, 0, 0);
+        VoxelChunk chunk = CreateChunk(chunkCoord);
+        chunk.SetVoxel(chunkCoord.X, chunkCoord.Y, chunkCoord.Z, 1, Colors.Black);
+        chunk.UpdateMesh();
+    }
+
     /// <summary>
     /// Tries to retrieve a chunk at the given chunk coordinate.
     /// If the chunk doesn't exist, new one is created.
@@ -99,7 +108,7 @@ public partial class VoxelEntity : Node3D
         chunk.QueueFree();
     }
 
-    public void SetVoxel(Vector3I globalPos, byte id)
+    public void SetVoxel(Vector3I globalPos, byte id, Color color)
     {
         Vector3I chunkCoord = new Vector3I(
             Mathf.FloorToInt((float)globalPos.X / ChunkData.Size),
@@ -114,7 +123,7 @@ public partial class VoxelEntity : Node3D
             globalPos.Y - (chunkCoord.Y * ChunkData.Size),
             globalPos.Z - (chunkCoord.Z * ChunkData.Size)
         );
-        chunk.SetVoxel(localPos.X, localPos.Y, localPos.Z, id);
+        chunk.SetVoxel(localPos.X, localPos.Y, localPos.Z, id, color);
         chunk.UpdateMesh();
     }
 }
