@@ -5,7 +5,6 @@ namespace Shooter.Scripts.Voxel;
 
 public partial class VoxelChunk : Node3D
 {
-    public VoxelRegistry Registry { get; set; }
     public Vector3I ChunkCoord { get; set; }
     
     public ChunkData ChunkData;
@@ -16,32 +15,18 @@ public partial class VoxelChunk : Node3D
     private bool _isDirty;
     public Action<VoxelChunk> OnBecameEmpty;
 
-    public void Initialize(VoxelRegistry registry, Material mat)
+    public void Initialize(StandardMaterial3D mat)
     {
-        Registry = registry;
         ChunkData = new ChunkData();
-        ChunkData.Registry = Registry;
-
-        // 2. Set up the visual component
+        
         _meshInstance = new MeshInstance3D();
         _meshInstance.MaterialOverride = mat;
         AddChild(_meshInstance);
-
-        // 3. Set up the physics component
+        
         _staticBody = new StaticBody3D();
         AddChild(_staticBody);
         _collisionShape = new CollisionShape3D();
         _staticBody.AddChild(_collisionShape);
-    }
-
-    public override void _Ready()
-    {
-        // If it was already initialized manually, do nothing.
-        // Otherwise, we might need to initialize it if it's placed in the editor.
-        /*if (ChunkData == null)
-        {
-            Initialize(Registry);
-        }*/
     }
 
     /// <summary>
@@ -49,10 +34,10 @@ public partial class VoxelChunk : Node3D
     /// </summary>
     public void UpdateMesh()
     {
-        if (ChunkData == null || Registry == null || !_isDirty) return;
+        if (ChunkData == null || !_isDirty) return;
 
         // Generate the new mesh using our Mesher
-        ArrayMesh newMesh = VoxelMesher.GenerateMesh(ChunkData, Registry);
+        ArrayMesh newMesh = VoxelMesher.GenerateMesh(ChunkData);
         
         if (newMesh == null)
         {
@@ -71,11 +56,11 @@ public partial class VoxelChunk : Node3D
     /// <summary>
     /// Public method to modify voxels from outside (e.g., a player tool).
     /// </summary>
-    public void SetVoxel(int x, int y, int z, byte id, Color color = default)
+    public void SetVoxel(Vector3I pos, byte voxelType, Color color = default)
     {
-        ChunkData.SetVoxel(x, y, z, id);
+        ChunkData.SetVoxel(pos, voxelType);
         if (color != default)
-            ChunkData.SetVoxelColor(x, y, z, color);
+            ChunkData.SetVoxelColor(pos, color);
         
         if (ChunkData.IsEmpty())
         {
@@ -99,17 +84,17 @@ public partial class VoxelChunk : Node3D
             Mathf.RoundToInt(samplePos.Z / ChunkData.VoxelSize)
         );
 
-        if (!ChunkData.IsInBounds(pos.X, pos.Y, pos.Z))
+        if (!ChunkData.IsInBounds(pos))
             return;
 
-        byte currentId = ChunkData.GetVoxel(pos.X, pos.Y, pos.Z);
+        byte currentId = ChunkData.GetVoxel(pos);
         if (currentId == 0)
         {
             GD.PrintErr($"[VoxelChunk] Hit an empty voxel at {pos}, samplePos={samplePos}");
             return;
         }
 
-        var mat = Registry.GetMaterial(currentId);
+        var mat = VoxelRegistry.GetMaterial(currentId);
         if (mat == null)
         {
             GD.PrintErr($"[VoxelChunk] No material found for voxel ID {currentId} at {pos}");
@@ -118,11 +103,11 @@ public partial class VoxelChunk : Node3D
 
         if (penetration > mat.Toughness)
         {
-            SetVoxel(pos.X, pos.Y, pos.Z, 0);
+            SetVoxel(pos, 0);
         }
         else
         {
-            Color currentColor = ChunkData.GetVoxelColor(pos.X, pos.Y, pos.Z);
+            Color currentColor = ChunkData.GetVoxelColor(pos);
             if (currentColor == Colors.Transparent)
             {
                 currentColor = mat.Color;
@@ -135,7 +120,7 @@ public partial class VoxelChunk : Node3D
                 currentColor.A
             );
             
-            ChunkData.SetVoxelColor(pos.X, pos.Y, pos.Z, darkenedColor);
+            ChunkData.SetVoxelColor(pos, darkenedColor);
         }
 
         UpdateMesh();

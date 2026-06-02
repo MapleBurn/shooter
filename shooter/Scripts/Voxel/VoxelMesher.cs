@@ -42,7 +42,7 @@ public static class VoxelMesher
         { Faces.Bottom, new Vector3(0, -1, 0) }
     };
 
-    public static ArrayMesh GenerateMesh(ChunkData data, VoxelRegistry registry)
+    public static ArrayMesh GenerateMesh(ChunkData data)
     {
         List<Vector3> vertices = new();
         List<Color> colors = new();
@@ -55,21 +55,20 @@ public static class VoxelMesher
             {
                 for (int z = 0; z < ChunkData.Size; z++)
                 {
-                    byte voxelId = data.GetVoxel(x, y, z);
+                    byte voxelId = data.GetVoxel(new Vector3I(x, y, z));
                     if (voxelId == 0) continue; // Skip air
 
                     var pos = new Vector3(x, y, z);
 
                     // Get the base material color or use the custom voxel color
-                    Color voxelColor = data.GetVoxelColor(x, y, z);
-                    Color finalColor = voxelColor != Colors.Transparent ? voxelColor : registry.GetMaterial(voxelId)?.Color ?? Colors.White;
+                    Color voxelColor = data.GetVoxelColor(new Vector3I(x, y, z));
 
                     // Check each face to see if it's exposed
                     foreach (Faces face in Enum.GetValues(typeof(Faces)))
                     {
                         if (IsFaceExposed(face, x, y, z, data))
                         {
-                            AddFace(face, pos, finalColor, vertices, colors, normals, indices);
+                            AddFace(face, pos, voxelColor, vertices, colors, normals, indices);
                         }
                     }
                 }
@@ -96,7 +95,7 @@ public static class VoxelMesher
         }
 
         // If neighbor is air, it's exposed
-        return data.GetVoxel(nx, ny, nz) == 0;
+        return data.GetVoxel(new Vector3I(nx, ny, nz)) == 0;
     }
 
     private static void AddFace(Faces face, Vector3 position, Color color, 

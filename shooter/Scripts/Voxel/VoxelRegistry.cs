@@ -2,13 +2,33 @@ using Godot;
 
 namespace Shooter.Scripts.Voxel;
 
-[GlobalClass]
-public partial class VoxelRegistry : Resource
+public static class VoxelRegistry
 {
-    // Maps an ID (byte) to a Material
-    [Export] public Godot.Collections.Array<VoxelMaterial> Materials { get; set; } = new();
+    public static bool IsInitialized;
+    [Export] public static Godot.Collections.Array<VoxelMaterial> Materials { get; set; } = new();
     
-    public VoxelMaterial? GetMaterial(byte id)
+    public static void Initialize()
+    {
+        using var dir = DirAccess.Open("res://Resources/Materials");
+		
+        foreach (var fileName in dir.GetFiles())
+        {
+            if (!fileName.EndsWith(".tres") && !fileName.EndsWith(".res"))
+                continue;
+
+            string fullPath = $"res://Resources/Materials/{fileName}";
+            var material = ResourceLoader.Load<VoxelMaterial>(fullPath);
+
+            if (material == null)
+                continue;
+
+            Materials.Add(material);
+        }
+        
+        IsInitialized = true;
+    }
+    
+    public static VoxelMaterial GetMaterial(byte id)
     {
         if (id == 0)
             return null; // 0 is Air
@@ -18,6 +38,4 @@ public partial class VoxelRegistry : Resource
         
         return null;
     }
-
-    public float GetToughness(byte id) => GetMaterial(id)?.Toughness ?? 0f;
 }

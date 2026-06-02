@@ -30,11 +30,6 @@ public partial class EditorMenuScreen : Control
 		GetTree().ChangeSceneToFile(MainMenuScenePath);
 	}
 	
-	public void BtnSavePressed()
-	{
-		// Implement save functionality here
-	}
-	
 	public override void _Process(double delta)
 	{
 	}

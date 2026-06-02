@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3 uid="uid://c1rroegtv276h"]
+
+[ext_resource type="Script" uid="uid://dfctfu4wh63oq" path="res://Scripts/Voxel/VoxelMaterial.cs" id="1_3b0hg"]
+
+[resource]
+script = ExtResource("1_3b0hg")
+Name = "Organ"
+Toughness = 40.0
+metadata/_custom_type_script = "uid://dfctfu4wh63oq"

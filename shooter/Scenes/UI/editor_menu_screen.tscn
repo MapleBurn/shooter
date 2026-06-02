@@ -39,16 +39,10 @@ custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Resume"
 
-[node name="btnSave" type="Button" parent="VBoxContainer" unique_id=373522245]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-text = "Save Blueprint"
-
 [node name="btnExit" type="Button" parent="VBoxContainer" unique_id=1576516338]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Exit to menu"
 
 [connection signal="pressed" from="VBoxContainer/btnResume" to="." method="BtnResumePressed"]
-[connection signal="pressed" from="VBoxContainer/btnSave" to="." method="BtnSavePressed"]
 [connection signal="pressed" from="VBoxContainer/btnExit" to="." method="BtnExitPressed"]

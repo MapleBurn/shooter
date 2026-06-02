@@ -7,8 +7,7 @@ namespace Shooter.Scripts.Voxel;
 public partial class VoxelEntity : Node3D
 {
     public const int GridSize = 8; // Number of chunks along one axis
-
-    public VoxelRegistry Registry { get; set; }
+    
     private Dictionary<Vector3I, VoxelChunk> _chunks = new();
     private StandardMaterial3D _voxelMaterial;
 
@@ -16,7 +15,8 @@ public partial class VoxelEntity : Node3D
     {
         _voxelMaterial = new StandardMaterial3D();
         _voxelMaterial.VertexColorUseAsAlbedo = true;
-        Registry = GD.Load<VoxelRegistry>("res://Resources/VoxelMaterials.tres");
+        if (!VoxelRegistry.IsInitialized)
+            VoxelRegistry.Initialize();
         //GenerateDummyTerrain();
         //GenerateBrick();
         SpawnCube();
@@ -36,13 +36,13 @@ public partial class VoxelEntity : Node3D
                 {
                     for (int z = 0; z < ChunkData.Size; z++)
                     {
-                        chunk.SetVoxel(x, 0, z, 1);
+                        chunk.SetVoxel(new Vector3I(x, 0, z), 1);
 
                         if (GD.Randf() > 0.9f)
                         {
                             for (int y = 1; y < 4; y++)
                             {
-                                chunk.SetVoxel(x, y, z, 1);
+                                chunk.SetVoxel(new Vector3I(x, y, z), 1);
                             }
                         }
                     }
@@ -63,7 +63,7 @@ public partial class VoxelEntity : Node3D
             {
                 for (int y = 1; y < ChunkData.Size; y++)
                 {
-                    chunk.SetVoxel(x, y, z, 1);
+                    chunk.SetVoxel(new Vector3I(x, y, z), 1);
                 }
             }
         }
@@ -74,7 +74,8 @@ public partial class VoxelEntity : Node3D
     {
         var chunkCoord = new Vector3I(0, 0, 0);
         VoxelChunk chunk = CreateChunk(chunkCoord);
-        chunk.SetVoxel(chunkCoord.X, chunkCoord.Y, chunkCoord.Z, 1, Colors.Black);
+        chunk.Initialize(_voxelMaterial);
+        chunk.SetVoxel(chunkCoord, 1, Colors.Black);
         chunk.UpdateMesh();
     }
 
@@ -88,7 +89,6 @@ public partial class VoxelEntity : Node3D
             return existingChunk;
 
         var chunk = new VoxelChunk();
-        chunk.Initialize(Registry, _voxelMaterial);
         chunk.ChunkCoord = coord;
         var size = ChunkData.Size * ChunkData.VoxelSize;
         chunk.Position = (Vector3)coord * size;
@@ -108,22 +108,28 @@ public partial class VoxelEntity : Node3D
         chunk.QueueFree();
     }
 
-    public void SetVoxel(Vector3I globalPos, byte id, Color color)
+    public void SetVoxel(Vector3I globalPos, byte voxelType, Color color)
     {
         Vector3I chunkCoord = new Vector3I(
             Mathf.FloorToInt((float)globalPos.X / ChunkData.Size),
             Mathf.FloorToInt((float)globalPos.Y / ChunkData.Size),
             Mathf.FloorToInt((float)globalPos.Z / ChunkData.Size)
         );
-
-        VoxelChunk chunk = CreateChunk(chunkCoord);
+        
+        _chunks.TryGetValue(chunkCoord, out VoxelChunk chunk);
+        if (chunk == null)
+        {
+            chunk = CreateChunk(chunkCoord);
+            chunk.Initialize(_voxelMaterial);
+            _chunks[chunkCoord] = chunk;
+        }
 
         Vector3I localPos = new Vector3I(
             globalPos.X - (chunkCoord.X * ChunkData.Size),
             globalPos.Y - (chunkCoord.Y * ChunkData.Size),
             globalPos.Z - (chunkCoord.Z * ChunkData.Size)
         );
-        chunk.SetVoxel(localPos.X, localPos.Y, localPos.Z, id, color);
+        chunk.SetVoxel(localPos, voxelType, color);
         chunk.UpdateMesh();
     }
 }

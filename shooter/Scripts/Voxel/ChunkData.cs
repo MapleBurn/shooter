@@ -5,48 +5,54 @@ namespace Shooter.Scripts.Voxel;
 
 public class ChunkData
 {
-    public const int Size = 16;
+    public const int Size = 32;
     public const float VoxelSize = 0.2f; // Size of each voxels in meters
     public const int TotalVoxels = Size * Size * Size;
 
     private readonly byte[] _voxels = new byte[TotalVoxels];
     private readonly Color[] _voxelColors = new Color[TotalVoxels];
-
-    public VoxelRegistry Registry { get; set; }
     
-    private int GetIndex(int x, int y, int z)
+    private int GetIndex(Vector3I pos)
     {
-        return x + (y * Size) + (z * Size * Size);
+        return pos.X + (pos.Y * Size) + (pos.Z * Size * Size);
     }
 
-    public void SetVoxel(int x, int y, int z, byte id)
+    public void SetVoxel(Vector3I pos, byte id)
     {
-        if (IsInBounds(x, y, z))
+        if (IsInBounds(pos))
         {
-            _voxels[GetIndex(x, y, z)] = id;
-            var mat = Registry.GetMaterial(id);
-            _voxelColors[GetIndex(x, y, z)] = mat?.Color ?? Colors.DeepPink;
+            _voxels[GetIndex(pos)] = id;
+            var mat = VoxelRegistry.GetMaterial(id);
+            if  (mat == null)
+            {
+                GD.Print("[ChunkData] Voxel ID is: " + id + ", it does not exist or is Air.");
+                _voxels[GetIndex(pos)] = 0;
+                _voxelColors[GetIndex(pos)] = Colors.Transparent;
+                return;
+            }
+            GD.Print("[ChunkData] Set voxel with material: " + mat.Name + ", ID: " + id);
+            _voxelColors[GetIndex(pos)] = mat.Color;
         }
     }
 
-    public byte GetVoxel(int x, int y, int z)
+    public byte GetVoxel(Vector3I pos)
     {
-        if (!IsInBounds(x, y, z)) return 0; // Return air if out of bounds
-        return _voxels[GetIndex(x, y, z)];
+        if (!IsInBounds(pos)) return 0; // Return air if out of bounds
+        return _voxels[GetIndex(pos)];
     }
     
-    public void SetVoxelColor(int x, int y, int z, Color color)
+    public void SetVoxelColor(Vector3I pos, Color color)
     {
-        if (IsInBounds(x, y, z))
+        if (IsInBounds(pos))
         {
-            _voxelColors[GetIndex(x, y, z)] = color;
+            _voxelColors[GetIndex(pos)] = color;
         }
     }
 
-    public Color GetVoxelColor(int x, int y, int z)
+    public Color GetVoxelColor(Vector3I pos)
     {
-        if (!IsInBounds(x, y, z)) return Colors.Transparent;
-        return _voxelColors[GetIndex(x, y, z)];
+        if (!IsInBounds(pos)) return Colors.Transparent;
+        return _voxelColors[GetIndex(pos)];
     }
 
     public bool IsEmpty()
@@ -58,8 +64,8 @@ public class ChunkData
         return true;
     }
 
-    public bool IsInBounds(int x, int y, int z)
+    public bool IsInBounds(Vector3I pos)
     {
-        return x >= 0 && x < Size && y >= 0 && y < Size && z >= 0 && z < Size;
+        return pos.X >= 0 && pos.X < Size && pos.Y >= 0 && pos.Y < Size && pos.Z >= 0 && pos.Z < Size;
     }
 }

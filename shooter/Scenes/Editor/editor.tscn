@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b43kggso16h8o" path="res://Scenes/Editor/editor_player.tscn" id="2_3ysjy"]
 [ext_resource type="Script" uid="uid://d4g6qu0ufplbl" path="res://Scripts/Voxel/VoxelEntity.cs" id="3_3ysjy"]
 [ext_resource type="PackedScene" uid="uid://dnybf6v2bjsn0" path="res://Scenes/UI/editor_menu_screen.tscn" id="3_ub1o7"]
+[ext_resource type="PackedScene" uid="uid://vosispq8lfsn" path="res://Scenes/Editor/save_menu.tscn" id="4_6172c"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_dftp8"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -28,9 +29,10 @@ environment = SubResource("Environment_ub1o7")
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="EditorPlayer" parent="." unique_id=1649158988 node_paths=PackedStringArray("VoxelWorld", "Picker") instance=ExtResource("2_3ysjy")]
+[node name="EditorPlayer" parent="." unique_id=1649158988 node_paths=PackedStringArray("VoxelWorld", "Picker", "MaterialMenu") instance=ExtResource("2_3ysjy")]
 VoxelWorld = NodePath("../Map")
 Picker = NodePath("../UILayer/ColorPicker")
+MaterialMenu = NodePath("../UILayer/MaterialMenu")
 
 [node name="UILayer" type="CanvasLayer" parent="." unique_id=1169125113]
 layer = 2
@@ -43,6 +45,8 @@ edit_intensity = false
 
 [node name="EditorMenuScreen" parent="UILayer" unique_id=569189105 instance=ExtResource("3_ub1o7")]
 visible = false
+
+[node name="MaterialMenu" parent="UILayer" unique_id=1758630930 instance=ExtResource("4_6172c")]
 
 [node name="Map" type="Node3D" parent="." unique_id=1926615472]
 script = ExtResource("3_3ysjy")

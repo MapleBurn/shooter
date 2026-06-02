@@ -8,6 +8,7 @@ public partial class EditorPlayer : CharacterBody3D
     [Export] public GhostCursor GhostCursor;
     [Export] public VoxelEntity VoxelWorld;
     [Export] public ColorPicker Picker;
+    [Export] public SaveMenu MaterialMenu;
     
     // --------------- Camera control parameters ---------------
     [Export] public Camera3D EditorCamera;
@@ -128,11 +129,11 @@ public partial class EditorPlayer : CharacterBody3D
 
         if (!GhostCursor.HasValidTarget)
             return;
-
+        
         if (_isDeleteMode)
             VoxelWorld.SetVoxel(GhostCursor.CurrentGlobalVoxelPos, 0, Picker.Color);
         else
-            VoxelWorld.SetVoxel(GhostCursor.CurrentGlobalVoxelPos, 1, Picker.Color);
+            VoxelWorld.SetVoxel(GhostCursor.CurrentGlobalVoxelPos, MaterialMenu.SelectedVoxelId, Picker.Color);
     }
 
     private void Orbit(Vector2 mouseDelta)
