@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Godot;
-using Shooter.Scripts.PlayerLogic;
 using Shooter.Scripts.Voxel;
 
 namespace Shooter.Scripts.Gun;

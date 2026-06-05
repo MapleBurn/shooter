@@ -1,10 +1,9 @@
 using Godot;
 using System.Collections.Generic;
-using Shooter.Scripts.PlayerLogic;
 
 namespace Shooter.Scripts;
 
-public partial class World : Node3D
+public partial class SessionManager : Node3D
 {
     [Export] private PackedScene _playerScene;
     [Export] private MultiplayerSpawner _spawner;
@@ -63,7 +62,7 @@ public partial class World : Node3D
         }
 
         // Reset pause state
-        OperatorPlayer.IsGamePaused = false;
+        Player.IsGamePaused = false;
         Input.MouseMode = Input.MouseModeEnum.Visible;
 
         // Return to main menu
@@ -115,14 +114,14 @@ public partial class World : Node3D
     {
         int id = int.Parse(data.AsString());
         var player = _playerScene.Instantiate<CharacterBody3D>();
-
+        
         player.Name = id.ToString();
         player.SetMultiplayerAuthority(id);
 
         Vector3 spawnPos = GetNextSpawnPoint();
         player.Position = spawnPos;
 
-        if (player is OperatorPlayer p)
+        if (player is Player p)
             p.SetSpawnPosition(spawnPos);
 
         return player;

@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using Shooter.Scripts.PlayerLogic;
 
 namespace Shooter.Scripts.UI;
 

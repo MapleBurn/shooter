@@ -141,7 +141,7 @@ public partial class VoxelEntity : Node3D
     {
         foreach (VoxelChunk chunk in _chunks.Values)
         {
-            ChunkSaver.Save(_chunks);
+            ChunkSaver.Save(_chunks, "map.bin");
         }
     }
     
@@ -152,7 +152,7 @@ public partial class VoxelEntity : Node3D
             chunk.QueueFree();
         }
         
-        _chunks = ChunkSaver.Load();
+        _chunks = ChunkSaver.Load("map.bin");
         foreach (VoxelChunk chunk in _chunks.Values)
         {
             chunk.Initialize(_voxelMaterial);

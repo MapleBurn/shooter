@@ -7,14 +7,14 @@ namespace Shooter.Scripts.Voxel;
 public static class ChunkSaver
 {
     private const string SaveDir = "user://Shooter/saves/";
-    private const string SaveFile = "world.bin";
+    //private const string SaveFile = "world.bin";
     private const uint   Magic = 0x564F584C; // "VOXL" magic number
     private const ushort Version = 1;
     
-    public static void Save(Dictionary<Vector3I, VoxelChunk> chunks)
+    public static void Save(Dictionary<Vector3I, VoxelChunk> chunks, string saveFile)
     {
         DirAccess.MakeDirRecursiveAbsolute(SaveDir);
-        string path = ProjectSettings.GlobalizePath(SaveDir + SaveFile);
+        string path = ProjectSettings.GlobalizePath(SaveDir + saveFile);
 
         using var fs = File.Open(path, FileMode.Create);
         using var bw = new BinaryWriter(fs);
@@ -46,9 +46,9 @@ public static class ChunkSaver
         }
     }
 
-    public static Dictionary<Vector3I, VoxelChunk> Load()
+    public static Dictionary<Vector3I, VoxelChunk> Load(string saveFile)
     {
-        string path = ProjectSettings.GlobalizePath(SaveDir + SaveFile);
+        string path = ProjectSettings.GlobalizePath(SaveDir + saveFile);
         var result  = new Dictionary<Vector3I, VoxelChunk>();
 
         if (!File.Exists(path))

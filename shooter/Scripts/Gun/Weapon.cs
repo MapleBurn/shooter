@@ -1,8 +1,5 @@
-using Godot;
-using System;
 using System.Threading.Tasks;
-using Shooter.Scripts.Gun;
-using Shooter.Scripts.PlayerLogic;
+using Godot;
 
 namespace Shooter.Scripts.Gun;
 
@@ -19,16 +16,18 @@ public partial class Weapon : Node3D
 
     public Vector3 AdsPositionOffset = new Vector3(-0.15f, 0.05f, -0.1f);
 
+    // Visual
     public float TrailDuration = 0.12f;
     public Color TrailColor = new Color(1.0f, 0.95f, 0.7f, 0.5f);
-    #endregion
     
+    // Ammo and bullet
     public int MaxAmmo = 30;
     private int _currentAmmo;
     private bool _isReloading = false;
     private float _reloadDuration = 4.0f;
     private float _bulletSpeed = 500.0f;
     private float _bulletPenetration = 100.0f;
+    #endregion
 
     private Timer _fireRateTimer;
     private bool _canFire = true;
@@ -37,7 +36,7 @@ public partial class Weapon : Node3D
     private Vector3 _originalGunPos;
     private Camera3D _camera;
     private RandomNumberGenerator _rng;
-    private OperatorPlayer _ownerPlayer;
+    private Player _ownerPlayer;
 
     private OmniLight3D _muzzleFlash;
     private GpuParticles3D _muzzleParticles;
@@ -48,7 +47,7 @@ public partial class Weapon : Node3D
         _rng = new RandomNumberGenerator();
         _rng.Randomize();
 
-        _ownerPlayer = GetParent<OperatorPlayer>();
+        _ownerPlayer = GetParent<Player>();
         if (_ownerPlayer == null)
         {
             GD.PrintErr("[Weapon] Couldn't get the player!");
@@ -87,9 +86,9 @@ public partial class Weapon : Node3D
     {
         if (!_ownerPlayer.IsMultiplayerAuthority()) return;
         if (_ownerPlayer.IsDead) return;
-        if (OperatorPlayer.IsGamePaused) return;
+        if (Player.IsGamePaused) return;
 
-        bool isAiming = _ownerPlayer.IsAiming;
+        bool isAiming = true;//_ownerPlayer.IsAiming;
 
         float cameraXRotation = _camera.Rotation.X;
         Rotation = new Vector3(cameraXRotation * WeaponTiltAmount, 0, 0);
@@ -124,7 +123,7 @@ public partial class Weapon : Node3D
             Reload();
         }*/
 
-        bool isAiming = _ownerPlayer?.IsAiming ?? false;
+        bool isAiming = true;//_ownerPlayer?.IsAiming ?? false;
         float spread = isAiming ? AdsSpread : HipSpread;
 
         Vector3 spreadOffset = new Vector3(
@@ -138,8 +137,6 @@ public partial class Weapon : Node3D
 
         ShowMuzzleFlash();
         RecoilAnimation();
-
-        //Rpc(MethodName.OnShotFired);
     }
 
     // could be done without async/await but this way it was cleaner
@@ -183,41 +180,11 @@ public partial class Weapon : Node3D
         var tween = GetTree().CreateTween();
         tween.TweenProperty(_gunMesh, "position", recoilPos, 0.03f);
 
-        Vector3 returnPos = (_ownerPlayer?.IsAiming ?? false)
-            ? _originalGunPos + AdsPositionOffset
-            : _originalGunPos;
+        Vector3 returnPos = _originalGunPos + AdsPositionOffset;//(_ownerPlayer?.IsAiming ?? false) ? _originalGunPos + AdsPositionOffset : _originalGunPos;
         tween.TweenProperty(_gunMesh, "position", returnPos, 0.12f)
             .SetTrans(Tween.TransitionType.Elastic);
     }
-
-    private void ShowHitmarker(string zone)
-    {
-        if (_ownerPlayer == null) return;
-        foreach (var child in _ownerPlayer.GetChildren())
-        {
-            if (child is PlayerHud playerHud)
-            {
-                playerHud.ShowHitConfirmation(zone == "head");
-                return;
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────
-    //  BULLET TRAIL
-    // ─────────────────────────────────────────
-
-    private void SpawnBulletTrail(Vector3 from, Vector3 to)
-    {
-        var trail = new BulletTrail();
-        GetTree().Root.AddChild(trail);
-        trail.Setup(from, to, TrailColor, TrailDuration);
-    }
-
-    // ─────────────────────────────────────────
-    //  MUZZLE PARTICLES
-    // ─────────────────────────────────────────
-
+    
     private void CreateMuzzleParticles()
     {
         _muzzleParticles = new GpuParticles3D();
@@ -246,18 +213,10 @@ public partial class Weapon : Node3D
         _muzzle.AddChild(_muzzleParticles);
     }
     #endregion
-
-    // ─────────────────────────────────────────
-    //  NETWORK SYNC
-    // ─────────────────────────────────────────
-
+    
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true, TransferMode = MultiplayerPeer.TransferModeEnum.Unreliable)]
     private void OnShotFired()
     {
         ShowMuzzleFlash();
-        //SpawnBulletTrail(trailStart, trailEnd);
-
-        //if (createHole)
-            //CreateBulletHole(holePos, holeNormal);
     }
 }
