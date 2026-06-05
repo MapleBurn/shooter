@@ -139,10 +139,7 @@ public partial class VoxelEntity : Node3D
 
     public void SaveAllChunks()
     {
-        foreach (VoxelChunk chunk in _chunks.Values)
-        {
-            ChunkSaver.Save(_chunks, "map.bin");
-        }
+        ChunkSaver.Save(_chunks, "map.bin");
     }
     
     public void LoadAllChunks()
@@ -151,10 +148,13 @@ public partial class VoxelEntity : Node3D
         {
             chunk.QueueFree();
         }
-        
+
         _chunks = ChunkSaver.Load("map.bin");
-        foreach (VoxelChunk chunk in _chunks.Values)
+        foreach (var (coord, chunk) in _chunks)
         {
+            chunk.ChunkCoord = coord;
+            var size = VoxelChunk.Size * VoxelChunk.VoxelSize;
+            chunk.Position = (Vector3)coord * size;
             chunk.Initialize(_voxelMaterial);
             AddChild(chunk);
             chunk.UpdateMesh();

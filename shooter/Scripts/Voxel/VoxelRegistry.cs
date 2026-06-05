@@ -1,4 +1,5 @@
 using Godot;
+using Shooter.Scripts.Voxel.Resources;
 
 namespace Shooter.Scripts.Voxel;
 

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Shooter.Scripts.Voxel;
+namespace Shooter.Scripts.Voxel.Resources;
 
 [GlobalClass] // This makes it appear in the "Create Resource" menu
 public partial class VoxelMaterial : Resource
