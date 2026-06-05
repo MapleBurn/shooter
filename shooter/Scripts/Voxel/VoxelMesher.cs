@@ -42,18 +42,18 @@ public static class VoxelMesher
         { Faces.Bottom, new Vector3(0, -1, 0) }
     };
 
-    public static ArrayMesh GenerateMesh(ChunkData data)
+    public static ArrayMesh GenerateMesh(VoxelChunk data)
     {
         List<Vector3> vertices = new();
         List<Color> colors = new();
         List<Vector3> normals = new();
         List<int> indices = new();
 
-        for (int x = 0; x < ChunkData.Size; x++)
+        for (int x = 0; x < VoxelChunk.Size; x++)
         {
-            for (int y = 0; y < ChunkData.Size; y++)
+            for (int y = 0; y < VoxelChunk.Size; y++)
             {
-                for (int z = 0; z < ChunkData.Size; z++)
+                for (int z = 0; z < VoxelChunk.Size; z++)
                 {
                     byte voxelId = data.GetVoxel(new Vector3I(x, y, z));
                     if (voxelId == 0) continue; // Skip air
@@ -78,7 +78,7 @@ public static class VoxelMesher
         return BuildArrayMesh(vertices, colors, normals, indices);
     }
 
-    private static bool IsFaceExposed(Faces face, int x, int y, int z, ChunkData data)
+    private static bool IsFaceExposed(Faces face, int x, int y, int z, VoxelChunk data)
     {
         Vector3 normal = _faceNormals[face];
         // Calculate neighbor position using integer math to avoid float errors
@@ -87,9 +87,9 @@ public static class VoxelMesher
         int nz = z + (int)normal.Z;
 
         // If neighbor is outside chunk bounds, it's exposed (air)
-        if (nx < 0 || nx >= ChunkData.Size || 
-            ny < 0 || ny >= ChunkData.Size || 
-            nz < 0 || nz >= ChunkData.Size)
+        if (nx < 0 || nx >= VoxelChunk.Size || 
+            ny < 0 || ny >= VoxelChunk.Size || 
+            nz < 0 || nz >= VoxelChunk.Size)
         {
             return true;
         }
@@ -112,7 +112,7 @@ public static class VoxelMesher
                 int vertexIndex = (int)triangle[i];
                 
                 // Add the actual world position: (Cube Corner + Block Position) * VoxelSize
-                vertices.Add((_cubeVertices[vertexIndex] + position) * ChunkData.VoxelSize);
+                vertices.Add((_cubeVertices[vertexIndex] + position) * VoxelChunk.VoxelSize);
                 colors.Add(color);
                 normals.Add(normal);
                 

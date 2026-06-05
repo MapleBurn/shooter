@@ -5,9 +5,17 @@ namespace Shooter.Scripts.Voxel;
 
 public partial class VoxelChunk : Node3D
 {
+    // Chunk data
+    public const int Size = 32;
+    public const float VoxelSize = 0.2f; // Size of each voxels in meters
+    public const int TotalVoxels = Size * Size * Size;
+
+    public byte[] Voxels = new byte[TotalVoxels];
+    public Color[] VoxelColors = new Color[TotalVoxels];
+    
+    // global chunk position in the grid
     public Vector3I ChunkCoord { get; set; }
     
-    public ChunkData ChunkData;
     private MeshInstance3D _meshInstance;
     private StaticBody3D _staticBody;
     private CollisionShape3D _collisionShape;
@@ -17,8 +25,6 @@ public partial class VoxelChunk : Node3D
 
     public void Initialize(StandardMaterial3D mat)
     {
-        ChunkData = new ChunkData();
-        
         _meshInstance = new MeshInstance3D();
         _meshInstance.MaterialOverride = mat;
         AddChild(_meshInstance);
@@ -27,17 +33,82 @@ public partial class VoxelChunk : Node3D
         AddChild(_staticBody);
         _collisionShape = new CollisionShape3D();
         _staticBody.AddChild(_collisionShape);
+
+        _isDirty = true;
     }
 
-    /// <summary>
-    /// Rebuilds the mesh and collision based on current ChunkData.
-    /// </summary>
+    #region Internal Chunk logic
+    private int GetIndex(Vector3I pos)
+    {
+        return pos.X + (pos.Y * Size) + (pos.Z * Size * Size);
+    }
+
+    public void SetVoxel(Vector3I pos, byte id)
+    {
+        if (IsInBounds(pos))
+        {
+            Voxels[GetIndex(pos)] = id;
+            var mat = VoxelRegistry.GetMaterial(id);
+            if  (mat == null)
+            {
+                Voxels[GetIndex(pos)] = 0;
+                VoxelColors[GetIndex(pos)] = Colors.Transparent;
+                return;
+            }
+            GD.Print("[ChunkData] Set voxel with material: " + mat.Name + ", ID: " + id);
+            VoxelColors[GetIndex(pos)] = mat.Color;
+        }
+        
+        if (IsEmpty())
+        {
+            OnBecameEmpty?.Invoke(this);
+            return;
+        }
+        _isDirty = true;
+    }
+
+    public byte GetVoxel(Vector3I pos)
+    {
+        if (!IsInBounds(pos)) return 0; // Return air if out of bounds
+        return Voxels[GetIndex(pos)];
+    }
+    
+    public void SetVoxelColor(Vector3I pos, Color color)
+    {
+        if (IsInBounds(pos))
+        {
+            VoxelColors[GetIndex(pos)] = color;
+        }
+    }
+
+    public Color GetVoxelColor(Vector3I pos)
+    {
+        if (!IsInBounds(pos)) return Colors.Transparent;
+        return VoxelColors[GetIndex(pos)];
+    }
+
+    private bool IsEmpty()
+    {
+        foreach (var voxel in Voxels)
+        {
+            if (voxel != 0) return false;
+        }
+        return true;
+    }
+
+    private bool IsInBounds(Vector3I pos)
+    {
+        return pos.X >= 0 && pos.X < Size && pos.Y >= 0 && pos.Y < Size && pos.Z >= 0 && pos.Z < Size;
+    }
+    #endregion
+    
+    
     public void UpdateMesh()
     {
-        if (ChunkData == null || !_isDirty) return;
+        if (!_isDirty) return;
 
-        // Generate the new mesh using our Mesher
-        ArrayMesh newMesh = VoxelMesher.GenerateMesh(ChunkData);
+        // Generate the new mesh using the Mesher
+        ArrayMesh newMesh = VoxelMesher.GenerateMesh(this);
         
         if (newMesh == null)
         {
@@ -52,23 +123,6 @@ public partial class VoxelChunk : Node3D
         shape.SetFaces(newMesh.GetFaces());
         _isDirty = false;
     }
-
-    /// <summary>
-    /// Public method to modify voxels from outside (e.g., a player tool).
-    /// </summary>
-    public void SetVoxel(Vector3I pos, byte voxelType, Color color = default)
-    {
-        ChunkData.SetVoxel(pos, voxelType);
-        if (color != default)
-            ChunkData.SetVoxelColor(pos, color);
-        
-        if (ChunkData.IsEmpty())
-        {
-            OnBecameEmpty?.Invoke(this);
-            return;
-        }
-        _isDirty = true;
-    }
     
     public void DamageVoxel(Vector3 worldHitPos, Vector3 worldRayDir, float penetration)
     {
@@ -79,15 +133,15 @@ public partial class VoxelChunk : Node3D
         Vector3 samplePos = localHit + localRayDir * epsilon;
 
         Vector3I pos = new Vector3I(
-            Mathf.RoundToInt(samplePos.X / ChunkData.VoxelSize),
-            Mathf.RoundToInt(samplePos.Y / ChunkData.VoxelSize),
-            Mathf.RoundToInt(samplePos.Z / ChunkData.VoxelSize)
+            Mathf.RoundToInt(samplePos.X / VoxelSize),
+            Mathf.RoundToInt(samplePos.Y / VoxelSize),
+            Mathf.RoundToInt(samplePos.Z / VoxelSize)
         );
 
-        if (!ChunkData.IsInBounds(pos))
+        if (!IsInBounds(pos))
             return;
 
-        byte currentId = ChunkData.GetVoxel(pos);
+        byte currentId = GetVoxel(pos);
         if (currentId == 0)
         {
             GD.PrintErr($"[VoxelChunk] Hit an empty voxel at {pos}, samplePos={samplePos}");
@@ -107,7 +161,7 @@ public partial class VoxelChunk : Node3D
         }
         else
         {
-            Color currentColor = ChunkData.GetVoxelColor(pos);
+            Color currentColor = GetVoxelColor(pos);
             if (currentColor == Colors.Transparent)
             {
                 currentColor = mat.Color;
@@ -120,7 +174,7 @@ public partial class VoxelChunk : Node3D
                 currentColor.A
             );
             
-            ChunkData.SetVoxelColor(pos, darkenedColor);
+            SetVoxelColor(pos, darkenedColor);
         }
 
         UpdateMesh();

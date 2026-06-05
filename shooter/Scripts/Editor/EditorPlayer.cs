@@ -6,7 +6,7 @@ namespace Shooter.Scripts.Editor;
 public partial class EditorPlayer : CharacterBody3D
 {
     [Export] public GhostCursor GhostCursor;
-    [Export] public VoxelEntity VoxelWorld;
+    [Export] public VoxelWorld World;
     [Export] public ColorPicker Picker;
     [Export] public SaveMenu MaterialMenu;
     
@@ -124,16 +124,16 @@ public partial class EditorPlayer : CharacterBody3D
 
     private void PlaceOrBreak()
     {
-        if (GhostCursor == null || VoxelWorld == null || Picker == null)
+        if (GhostCursor == null || World == null || Picker == null)
             return;
 
         if (!GhostCursor.HasValidTarget)
             return;
         
         if (_isDeleteMode)
-            VoxelWorld.SetVoxel(GhostCursor.CurrentGlobalVoxelPos, 0, Picker.Color);
+            World.StaticMap.SetVoxel(GhostCursor.CurrentGlobalVoxelPos, 0, Picker.Color);
         else
-            VoxelWorld.SetVoxel(GhostCursor.CurrentGlobalVoxelPos, MaterialMenu.SelectedVoxelId, Picker.Color);
+            World.StaticMap.SetVoxel(GhostCursor.CurrentGlobalVoxelPos, MaterialMenu.SelectedVoxelId, Picker.Color);
     }
 
     private void Orbit(Vector2 mouseDelta)

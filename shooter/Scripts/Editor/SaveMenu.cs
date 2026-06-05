@@ -28,10 +28,18 @@ public partial class SaveMenu : Control
 	{
 	}
 	
+	[Signal] public delegate void OnSaveClickedEventHandler();
 	private void OnBtnSavePressed()
 	{
-		var selectedOption = _saveOptionButton.GetItemText(_saveOptionButton.Selected);
+		//var selectedOption = _saveOptionButton.GetItemText(_saveOptionButton.Selected);
 		
+		EmitSignal(SignalName.OnSaveClicked);
+	}
+	
+	[Signal] public delegate void OnLoadClickedEventHandler();
+	private void OnBtnLoadBlueprintPressed()
+	{
+		EmitSignal(SignalName.OnLoadClicked);
 	}
 
 	private void OnItemSelected(int index)

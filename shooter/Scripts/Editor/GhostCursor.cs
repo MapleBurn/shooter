@@ -83,7 +83,7 @@ public partial class GhostCursor : Node3D
         Vector3 hitPoint = (Vector3)result["position"];
         Vector3 hitNormal = (Vector3)result["normal"];
 
-        float offsetAmount = ChunkData.VoxelSize * 0.1f;
+        float offsetAmount = VoxelChunk.VoxelSize * 0.1f;
 
         if (CurrentMode == EditMode.Place)
             hitPoint += hitNormal * offsetAmount;
@@ -91,9 +91,9 @@ public partial class GhostCursor : Node3D
             hitPoint -= hitNormal * offsetAmount;
 
         CurrentGlobalVoxelPos = new Vector3I(
-            Mathf.RoundToInt(hitPoint.X / ChunkData.VoxelSize),
-            Mathf.RoundToInt(hitPoint.Y / ChunkData.VoxelSize),
-            Mathf.RoundToInt(hitPoint.Z / ChunkData.VoxelSize)
+            Mathf.RoundToInt(hitPoint.X / VoxelChunk.VoxelSize),
+            Mathf.RoundToInt(hitPoint.Y / VoxelChunk.VoxelSize),
+            Mathf.RoundToInt(hitPoint.Z / VoxelChunk.VoxelSize)
         );
 
         GlobalPosition =
@@ -101,7 +101,7 @@ public partial class GhostCursor : Node3D
                 CurrentGlobalVoxelPos.X,
                 CurrentGlobalVoxelPos.Y,
                 CurrentGlobalVoxelPos.Z
-            ) * ChunkData.VoxelSize;
+            ) * VoxelChunk.VoxelSize;
 
         GlobalRotation = Vector3.Zero;
 
