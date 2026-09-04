@@ -45,6 +45,8 @@ public partial class VoxelChunk : Node3D
 
     public void SetVoxel(Vector3I pos, byte id)
     {
+        _isDirty = true;
+        
         if (IsInBounds(pos))
         {
             Voxels[GetIndex(pos)] = id;
@@ -62,9 +64,7 @@ public partial class VoxelChunk : Node3D
         if (IsEmpty())
         {
             OnBecameEmpty?.Invoke(this);
-            return;
         }
-        _isDirty = true;
     }
 
     public byte GetVoxel(Vector3I pos)

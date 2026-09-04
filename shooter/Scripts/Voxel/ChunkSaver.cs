@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Godot;
+using Shooter.Scripts.Voxel.Resources;
 
 namespace Shooter.Scripts.Voxel;
 
@@ -112,5 +114,67 @@ public static class ChunkSaver
         byte b = (byte)((packed >>  8) & 0xFF);
         byte a = (byte)( packed        & 0xFF);
         return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
+    }
+    
+    public static void SaveToResource(Dictionary<Vector3I, VoxelChunk> chunks, string saveFileName)
+    {
+        DirAccess.MakeDirRecursiveAbsolute(SaveDir);
+        // .tres = text format (human-readable, editor-friendly)
+        // .res  = binary format (smaller size, faster I/O)
+        string path = ProjectSettings.GlobalizePath(SaveDir + saveFileName + ".tres");
+
+        var resource = new VoxelWorldResource();
+        resource.Chunks = new Godot.Collections.Dictionary<string, ChunkDataResource>();
+
+        foreach (var (pos, chunk) in chunks)
+        {
+            var chunkData = new ChunkDataResource
+            {
+                Position = pos,
+                Voxels = chunk.Voxels,
+                VoxelColors = chunk.VoxelColors
+            };
+            
+            // Godot's resource serializer requires string keys for dictionaries
+            string key = $"{pos.X},{pos.Y},{pos.Z}";
+            resource.Chunks[key] = chunkData;
+        }
+
+        ResourceSaver.Save(resource, path);
+        GD.Print($"[ChunkSaver] Saved resource to: {path}");
+    }
+
+    public static Dictionary<Vector3I, VoxelChunk> LoadFromResource(string saveFileName)
+    {
+        string path = ProjectSettings.GlobalizePath(SaveDir + saveFileName + ".tres");
+        var result = new Dictionary<Vector3I, VoxelChunk>();
+
+        if (!File.Exists(path))
+        {
+            GD.PrintErr("[ChunkSaver] Resource file not found: ", path);
+            return result;
+        }
+        
+        var loadedResource = GD.Load<VoxelWorldResource>(path);
+        if (loadedResource == null || loadedResource.Chunks == null)
+        {
+            GD.PrintErr("[ChunkSaver] Failed to load resource or chunks are null.");
+            return result;
+        }
+
+        foreach (var kvp in loadedResource.Chunks)
+        {
+            var data = kvp.Value;
+            var pos = data.Position;
+            
+            var chunk = new VoxelChunk
+            {
+                Voxels = data.Voxels ?? Array.Empty<byte>(),
+                VoxelColors = data.VoxelColors ?? Array.Empty<Color>()
+            };
+            result[pos] = chunk;
+        }
+
+        return result;
     }
 }
