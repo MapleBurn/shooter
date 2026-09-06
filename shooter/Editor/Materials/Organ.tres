@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3 uid="uid://c1rroegtv276h"]
+
+[ext_resource type="Script" uid="uid://dfctfu4wh63oq" path="res://Voxel/Resources/VoxelMaterial.cs" id="1_8cu5o"]
+
+[resource]
+script = ExtResource("1_8cu5o")
+Name = "Organ"
+Toughness = 30.0
+Color = Color(0.38795707, 0.009958198, 4.813075e-08, 1)
+metadata/_custom_type_script = "uid://dfctfu4wh63oq"

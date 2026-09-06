@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://dnybf6v2bjsn0"]
+
+[ext_resource type="Script" uid="uid://c0xlksiay45fk" path="res://UI/EditorMenuScreen.cs" id="1_lwwks"]
+
+[node name="EditorMenuScreen" type="Control" unique_id=569189105]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lwwks")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1323196782]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.5132329, 0.5132329, 0.5132329, 0.19607843)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=393177562]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 269.0
+offset_top = 95.0
+offset_right = -283.0
+offset_bottom = -113.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="btnResume" type="Button" parent="VBoxContainer" unique_id=144820193]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "Resume"
+
+[node name="btnExit" type="Button" parent="VBoxContainer" unique_id=1576516338]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "Exit to menu"
+
+[connection signal="pressed" from="VBoxContainer/btnResume" to="." method="BtnResumePressed"]
+[connection signal="pressed" from="VBoxContainer/btnExit" to="." method="BtnExitPressed"]

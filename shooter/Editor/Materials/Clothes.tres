@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3 uid="uid://byv5lb1l404n1"]
+
+[ext_resource type="Script" uid="uid://dfctfu4wh63oq" path="res://Voxel/Resources/VoxelMaterial.cs" id="1_px46k"]
+
+[resource]
+script = ExtResource("1_px46k")
+Color = Color(0.30541635, 0.1126051, 0.04025288, 1)
+metadata/_custom_type_script = "uid://dfctfu4wh63oq"

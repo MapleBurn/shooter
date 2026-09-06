@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3 uid="uid://c3ike15mbgtdl"]
+
+[ext_resource type="Script" uid="uid://dfctfu4wh63oq" path="res://Voxel/Resources/VoxelMaterial.cs" id="1_41c6k"]
+
+[resource]
+script = ExtResource("1_41c6k")
+Name = "Brick"
+Toughness = 200.0
+metadata/_custom_type_script = "uid://dfctfu4wh63oq"

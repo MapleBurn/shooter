@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://chneeuased4d3"]
+
+[ext_resource type="Script" uid="uid://dyraf70rcmrrk" path="res://World/SessionManager.cs" id="1_k8do8"]
+[ext_resource type="PackedScene" uid="uid://fu1amsumtj2d" path="res://World/Player/player.tscn" id="2_bkhv4"]
+[ext_resource type="PackedScene" uid="uid://bop5c32ueja05" path="res://UI/ui.tscn" id="3_yf0ba"]
+[ext_resource type="PackedScene" uid="uid://c4g73bjjcc7gr" path="res://UI/pause_screen.tscn" id="4_eidgh"]
+[ext_resource type="Script" uid="uid://cebboteoi53me" path="res://Voxel/VoxelWorld.cs" id="5_oe8m4"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_a02cp"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_go701"]
+sky_material = SubResource("ProceduralSkyMaterial_a02cp")
+
+[sub_resource type="Environment" id="Environment_5a7ea"]
+background_mode = 2
+sky = SubResource("Sky_go701")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5ukr8"]
+vertex_color_use_as_albedo = true
+albedo_color = Color(3.465414e-06, 0.6382101, 0.87788486, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o06y3"]
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.55627334, 0.7533152, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k7acu"]
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0, 0, 1)
+
+[node name="World" type="Node3D" unique_id=7436364 node_paths=PackedStringArray("_spawner")]
+script = ExtResource("1_k8do8")
+_playerScene = ExtResource("2_bkhv4")
+_spawner = NodePath("MultiplayerSpawner")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=842651010]
+environment = SubResource("Environment_5a7ea")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=356354033]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="CSGBox3D3" type="CSGBox3D" parent="." unique_id=1098090813]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8054094, 1.0102528, 24.00713)
+use_collision = true
+size = Vector3(1.0849609, 1.0688477, 0.8725586)
+material = SubResource("StandardMaterial3D_5ukr8")
+
+[node name="CSGBox3D4" type="CSGBox3D" parent="." unique_id=890489944]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8054094, 3.0991058, 22.06822)
+use_collision = true
+size = Vector3(1.0849609, 1.0688477, 1.0274048)
+material = SubResource("StandardMaterial3D_o06y3")
+
+[node name="CSGBox3D5" type="CSGBox3D" parent="." unique_id=1366181758]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6832223, 1.0102528, 22.41577)
+use_collision = true
+size = Vector3(1.0849609, 1.0688477, 1.1381836)
+material = SubResource("StandardMaterial3D_k7acu")
+
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=2079608024]
+layer = 2
+
+[node name="UI" parent="UILayer" unique_id=1970827269 instance=ExtResource("3_yf0ba")]
+
+[node name="PauseScreen" parent="UILayer" unique_id=1191840184 instance=ExtResource("4_eidgh")]
+visible = false
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=268784330]
+spawn_path = NodePath("..")
+
+[node name="Map" type="Node3D" parent="." unique_id=694104668]
+script = ExtResource("5_oe8m4")

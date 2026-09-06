@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3 uid="uid://c1oeksb3ry0ob"]
+
+[ext_resource type="Script" uid="uid://dfctfu4wh63oq" path="res://Voxel/Resources/VoxelMaterial.cs" id="1_4252h"]
+
+[resource]
+script = ExtResource("1_4252h")
+Name = "Steel"
+Toughness = 1000.0
+Color = Color(0.6839932, 0.6839878, 0.67415106, 1)
+metadata/_custom_type_script = "uid://dfctfu4wh63oq"

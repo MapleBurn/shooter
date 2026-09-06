@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://fu1amsumtj2d"]
+
+[ext_resource type="Script" uid="uid://cvn6fiki1igpv" path="res://World/Player/Player.cs" id="1_cvnsp"]
+[ext_resource type="PackedScene" uid="uid://dawtokisfwnkh" path="res://World/Gun/weapon.tscn" id="2_cvnsp"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sh265"]
+radius = 0.4375
+height = 1.8671875
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_cvnsp"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
+[node name="Player" type="CharacterBody3D" unique_id=1960074569 node_paths=PackedStringArray("Camera")]
+script = ExtResource("1_cvnsp")
+Camera = NodePath("Camera3D")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1672635747]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06640625, 0)
+shape = SubResource("CapsuleShape3D_sh265")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1342454712]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58956134, 0)
+
+[node name="Weapon" parent="." unique_id=331073238 instance=ExtResource("2_cvnsp")]
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="." unique_id=293301970]
+replication_config = SubResource("SceneReplicationConfig_cvnsp")

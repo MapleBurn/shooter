@@ -1,9 +1,0 @@
-[gd_resource type="Resource" script_class="VoxelMaterial" format=3 uid="uid://byv5lb1l404n1"]
-
-[ext_resource type="Script" uid="uid://dfctfu4wh63oq" path="res://Scripts/Voxel/VoxelMaterial.cs" id="1_1q0a3"]
-
-[resource]
-script = ExtResource("1_1q0a3")
-Id = 2
-Name = "Clothes"
-metadata/_custom_type_script = "uid://dfctfu4wh63oq"

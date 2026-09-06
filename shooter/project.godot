@@ -31,6 +31,15 @@ project/assembly_name="Shooter"
 
 enabled=PackedStringArray("res://addons/netfox.internals/plugin.cfg", "res://addons/netfox.noray/plugin.cfg")
 
+[file_customization]
+
+folder_colors={
+"res://Editor/": "orange",
+"res://UI/": "purple",
+"res://Voxel/": "red",
+"res://World/": "green"
+}
+
 [input]
 
 up={

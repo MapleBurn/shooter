@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://bdu15g5kumi8q"]
+
+[ext_resource type="Script" uid="uid://b7xiy67uowgsb" path="res://Editor/Editor.cs" id="1_dftp8"]
+[ext_resource type="PackedScene" uid="uid://b43kggso16h8o" path="res://Editor/editor_player.tscn" id="2_3ysjy"]
+[ext_resource type="PackedScene" uid="uid://dnybf6v2bjsn0" path="res://UI/editor_menu_screen.tscn" id="3_ub1o7"]
+[ext_resource type="PackedScene" uid="uid://vosispq8lfsn" path="res://Editor/save_menu.tscn" id="4_6172c"]
+[ext_resource type="Script" uid="uid://cebboteoi53me" path="res://Voxel/VoxelWorld.cs" id="5_6172c"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_dftp8"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_3ysjy"]
+sky_material = SubResource("ProceduralSkyMaterial_dftp8")
+
+[sub_resource type="Environment" id="Environment_ub1o7"]
+background_mode = 2
+sky = SubResource("Sky_3ysjy")
+tonemap_mode = 2
+glow_enabled = true
+
+[node name="Editor" type="Node3D" unique_id=1337217709 node_paths=PackedStringArray("_map")]
+script = ExtResource("1_dftp8")
+_map = NodePath("Map")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=271735258]
+environment = SubResource("Environment_ub1o7")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=477304729]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="EditorPlayer" parent="." unique_id=1649158988 node_paths=PackedStringArray("World", "Picker", "MaterialMenu") instance=ExtResource("2_3ysjy")]
+World = NodePath("../Map")
+Picker = NodePath("../UILayer/ColorPicker")
+MaterialMenu = NodePath("../UILayer/MaterialMenu")
+
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=1169125113]
+layer = 2
+
+[node name="ColorPicker" type="ColorPicker" parent="UILayer" unique_id=1369860155]
+offset_right = 298.0
+offset_bottom = 646.0
+edit_alpha = false
+edit_intensity = false
+
+[node name="EditorMenuScreen" parent="UILayer" unique_id=569189105 instance=ExtResource("3_ub1o7")]
+visible = false
+
+[node name="MaterialMenu" parent="UILayer" unique_id=1758630930 instance=ExtResource("4_6172c")]
+
+[node name="Map" type="Node3D" parent="." unique_id=472830011]
+script = ExtResource("5_6172c")
+
+[connection signal="OnLoadClicked" from="UILayer/MaterialMenu" to="." method="OnLoadClicked"]
+[connection signal="OnSaveClicked" from="UILayer/MaterialMenu" to="." method="OnSaveClicked"]
